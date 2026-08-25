@@ -4,5 +4,5 @@ source "$(dirname "$0")/_common.sh"
 git_pull
 build_frontend
 build_backend
-reload_web
+install_and_reload_web
 echo "==> Full deploy complete"

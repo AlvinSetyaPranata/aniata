@@ -19,10 +19,25 @@ git_pull() {
   git reset --hard "origin/${BRANCH}"
 }
 
+# Install the nginx site config (Aniata SPA on :3001 + /api -> php-fpm),
+# served alongside any existing app already bound to :80/:443.
+install_nginx_config() {
+  echo "==> Installing nginx site config"
+  local src="${DEPLOY_DIR}/scripts/aniata.nginx.conf"
+  local avail="/etc/nginx/sites-available/aniata"
+  local domain="${APP_DOMAIN:-$(hostname)}"
+  sudo cp "${src}" "${avail}"
+  sudo sed -i "s/__APP_DOMAIN__/${domain}/g" "${avail}"
+  sudo ln -sf "${avail}" /etc/nginx/sites-enabled/aniata
+  sudo nginx -t
+}
+
 # Install deps, build the Vite bundle, and (re)start under pm2.
 build_frontend() {
   echo "==> Building frontend"
   cd "${FE_DIR}"
+  # Production must talk to the API same-origin (nginx proxies /api -> php-fpm).
+  export VITE_API_URL="${VITE_API_URL:-/api}"
   npm ci
   npm run build
 
@@ -51,4 +66,10 @@ reload_web() {
   echo "==> Reloading web stack"
   sudo systemctl reload nginx || sudo systemctl restart nginx
   sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
+}
+
+# Install the site config once, then reload. Safe to call on every deploy.
+install_and_reload_web() {
+  install_nginx_config
+  reload_web
 }

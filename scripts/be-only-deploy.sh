@@ -3,5 +3,5 @@
 source "$(dirname "$0")/_common.sh"
 git_pull
 build_backend
-reload_web
+install_and_reload_web
 echo "==> Backend-only deploy complete"
