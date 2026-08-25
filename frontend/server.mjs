@@ -4,7 +4,7 @@ import { join, extname, normalize, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), 'dist')
-const PORT = Number(process.env.PORT) || 3000
+const PORT = Number(process.env.PORT) || 3001
 const HOST = process.env.HOST || '0.0.0.0'
 
 const MIME = {
