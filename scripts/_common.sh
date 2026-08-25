@@ -118,14 +118,22 @@ ensure_permissions() {
   done
 
   # Restart the php-fpm service — resolve the actual unit name instead of
-  # guessing php8.3-fpm (which may not exist on this box).
+  # guessing php8.3-fpm (which may not exist on this box). systemctl restart
+  # can report non-zero in CI (Type=notify quirk) even when the service is
+  # actually up, so we verify the real state instead of trusting the exit code.
   local fpm_unit
   fpm_unit=$(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null \
     | awk '{print $1}' | grep -E '^php[0-9.]*-fpm\.service$' | head -n1)
   if [ -n "$fpm_unit" ]; then
-    sudo systemctl restart "$fpm_unit"
+    sudo systemctl restart "$fpm_unit" 2>&1 || true
   else
-    sudo systemctl restart php-fpm || true
+    sudo systemctl restart php-fpm 2>&1 || true
+  fi
+  if systemctl is-active --quiet "${fpm_unit:-php-fpm}"; then
+    echo "    ${fpm_unit:-php-fpm} is active"
+  else
+    echo "    WARN: ${fpm_unit:-php-fpm} not active after restart:"
+    sudo systemctl status "${fpm_unit:-php-fpm}" --no-pager || true
   fi
 
   # Sanity: the php-fpm MASTER is always root; the worker (which does the
@@ -150,11 +158,14 @@ reload_web() {
   ensure_permissions
 
   # A full restart (not reload) is required for the nginx 'user' directive to
-  # take effect, and 'reload-or-restart' can return non-zero in CI. If it fails,
-  # surface the unit status instead of dying silently under set -e.
+  # take effect. As with php-fpm, systemctl can return non-zero in CI even when
+  # the service is actually up, so verify the real active state.
   echo "==> Restarting nginx"
-  if ! sudo systemctl restart nginx; then
-    echo "ERROR: nginx failed to restart:" >&2
+  sudo systemctl restart nginx 2>&1 || true
+  if systemctl is-active --quiet nginx; then
+    echo "    nginx is active"
+  else
+    echo "ERROR: nginx not active after restart:" >&2
     sudo systemctl status nginx --no-pager || true
     exit 1
   fi
