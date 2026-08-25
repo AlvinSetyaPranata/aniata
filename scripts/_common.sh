@@ -148,8 +148,28 @@ ensure_permissions() {
 reload_web() {
   echo "==> Reloading web stack"
   ensure_permissions
-  sudo systemctl reload-or-restart nginx
-  sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
+
+  # A full restart (not reload) is required for the nginx 'user' directive to
+  # take effect, and 'reload-or-restart' can return non-zero in CI. If it fails,
+  # surface the unit status instead of dying silently under set -e.
+  echo "==> Restarting nginx"
+  if ! sudo systemctl restart nginx; then
+    echo "ERROR: nginx failed to restart:" >&2
+    sudo systemctl status nginx --no-pager || true
+    exit 1
+  fi
+
+  local fpm_unit
+  fpm_unit=$(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null \
+    | awk '{print $1}' | grep -E '^php[0-9.]*-fpm\.service$' | head -n1)
+  if [ -n "$fpm_unit" ]; then
+    echo "==> Restarting ${fpm_unit}"
+    if ! sudo systemctl restart "$fpm_unit"; then
+      echo "ERROR: ${fpm_unit} failed to restart:" >&2
+      sudo systemctl status "$fpm_unit" --no-pager || true
+      exit 1
+    fi
+  fi
 }
 
 # Install the site config once, then reload. Safe to call on every deploy.
