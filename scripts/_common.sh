@@ -87,9 +87,21 @@ build_backend() {
   php artisan view:cache
 }
 
+# Align nginx + php-fpm to the deploy user so they can read/write the app
+# files (which are owned by ubuntu and live under its home dir).
+ensure_permissions() {
+  echo "==> Aligning web-service users to deploy user (ubuntu)"
+  sudo sed -i 's/^user .*;/user ubuntu;/' /etc/nginx/nginx.conf
+  if [ -f /etc/php/8.3/fpm/pool.d/www.conf ]; then
+    sudo sed -i 's/^user = .*/user = ubuntu/; s/^group = .*/group = ubuntu/' /etc/php/8.3/fpm/pool.d/www.conf
+  fi
+  sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
+}
+
 # Reload the web stack (nginx + php-fpm).
 reload_web() {
   echo "==> Reloading web stack"
+  ensure_permissions
   sudo systemctl reload-or-restart nginx
   sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
 }
