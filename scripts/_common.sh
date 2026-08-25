@@ -92,10 +92,41 @@ build_backend() {
 ensure_permissions() {
   echo "==> Aligning web-service users to deploy user (ubuntu)"
   sudo sed -i 's/^user .*;/user ubuntu;/' /etc/nginx/nginx.conf
-  if [ -f /etc/php/8.3/fpm/pool.d/www.conf ]; then
-    sudo sed -i 's/^user = .*/user = ubuntu/; s/^group = .*/group = ubuntu/' /etc/php/8.3/fpm/pool.d/www.conf
+
+  # php-fpm pool files live under a versioned dir (/etc/php/X.Y/fpm/pool.d);
+  # edit every one we find so we don't depend on a hardcoded PHP version.
+  local pool
+  for pool in /etc/php/*/fpm/pool.d/www.conf; do
+    [ -f "$pool" ] || continue
+    echo "    patching ${pool}"
+    sudo sed -i 's/^user = .*/user = ubuntu/; s/^group = .*/group = ubuntu/' "$pool"
+  done
+
+  # Restart the php-fpm service — resolve the actual unit name instead of
+  # guessing php8.3-fpm (which may not exist on this box).
+  local fpm_unit
+  fpm_unit=$(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null \
+    | awk '{print $1}' | grep -E '^php[0-9.]*-fpm\.service$' | head -n1)
+  if [ -n "$fpm_unit" ]; then
+    sudo systemctl restart "$fpm_unit"
+  else
+    sudo systemctl restart php-fpm || true
   fi
-  sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
+
+  # Sanity: the php-fpm MASTER is always root; the worker (which does the
+  # file stat) runs as the pool user. Inspect a non-root worker, not the master.
+  local worker_user
+  worker_user=$(ps -o user= -C php-fpm --no-headers 2>/dev/null | grep -v root | head -n1 | tr -d ' ')
+  if [ -n "$worker_user" ]; then
+    echo "    php-fpm worker running as: ${worker_user} (want: ubuntu)"
+  else
+    echo "    WARN: could not find a non-root php-fpm worker; verify the pool user"
+  fi
+
+  # Sanity: nginx worker user (the one doing try_files stat()).
+  local nginx_user
+  nginx_user=$(grep -E '^[[:space:]]*user[[:space:]]+' /etc/nginx/nginx.conf 2>/dev/null | awk '{print $2}' | tr -d ';')
+  echo "    nginx worker configured as: ${nginx_user:-<unset>} (want: ubuntu)"
 }
 
 # Reload the web stack (nginx + php-fpm).
