@@ -109,7 +109,12 @@ ensure_permissions() {
   for pool in /etc/php/*/fpm/pool.d/www.conf; do
     [ -f "$pool" ] || continue
     echo "    patching ${pool}"
+    # Run the worker as ubuntu (so it can read app files under /home/ubuntu)...
     sudo sed -i 's/^user = .*/user = ubuntu/; s/^group = .*/group = ubuntu/' "$pool"
+    # ...and make the FastCGI listen socket owned by ubuntu too, otherwise the
+    # nginx worker (also ubuntu) gets EACCES on connect -> 502. The listen.*
+    # lines may be commented out by default, so strip a leading ';' if present.
+    sudo sed -i 's/^;*listen.owner = .*/listen.owner = ubuntu/; s/^;*listen.group = .*/listen.group = ubuntu/; s/^;*listen.mode = .*/listen.mode = 0660/' "$pool"
   done
 
   # Restart the php-fpm service — resolve the actual unit name instead of
