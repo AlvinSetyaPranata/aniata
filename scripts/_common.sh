@@ -61,10 +61,24 @@ build_frontend() {
   pm2 save
 }
 
+# Ensure the app's DB role can create tables/sequences (Postgres 15+ revokes
+# CREATE on public by default). Idempotent; warns but does not abort if it
+# can't (e.g. managed DB without superuser shell access).
+grant_db_privileges() {
+  echo "==> Ensuring DB privileges for ${DB_USERNAME}"
+  local sql="GRANT CREATE, USAGE ON SCHEMA public TO \"${DB_USERNAME}\"; \
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"${DB_USERNAME}\"; \
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"${DB_USERNAME}\";"
+  sudo -u postgres psql -d "${DB_DATABASE}" -c "${sql}" \
+    || echo "WARN: could not apply DB grants automatically; apply them manually"
+}
+
 # Production deps + migrations + framework caches.
 build_backend() {
   echo "==> Building backend"
   cd "${BE_DIR}"
+  set -a; [ -f .env ] && source .env; set +a
+  grant_db_privileges
   composer install --no-dev --optimize-autoloader --no-interaction
   php artisan migrate --force
   php artisan db:seed --force
