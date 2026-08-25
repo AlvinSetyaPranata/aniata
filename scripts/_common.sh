@@ -34,6 +34,9 @@ install_nginx_config() {
   local src="${DEPLOY_DIR}/scripts/aniata.nginx.conf"
   local avail="/etc/nginx/sites-available/aniata"
   local domain="${APP_DOMAIN:-$(hostname)}"
+  # The stock default site listens on :80, which is already taken by the
+  # existing app on this box. Drop it so our nginx only binds :83.
+  sudo rm -f /etc/nginx/sites-enabled/default
   sudo cp "${src}" "${avail}"
   sudo sed -i "s/__APP_DOMAIN__/${domain}/g" "${avail}"
   sudo ln -sf "${avail}" /etc/nginx/sites-enabled/aniata
@@ -72,7 +75,7 @@ build_backend() {
 # Reload the web stack (nginx + php-fpm).
 reload_web() {
   echo "==> Reloading web stack"
-  sudo systemctl reload nginx || sudo systemctl restart nginx
+  sudo systemctl reload-or-restart nginx
   sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
 }
 
