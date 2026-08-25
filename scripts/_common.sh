@@ -5,6 +5,14 @@
 
 set -euo pipefail
 
+# Non-interactive SSH shells don't source profiles, so node/npm/pm2 (often
+# installed via nvm) may be off PATH. Load them explicitly.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  source "$NVM_DIR/nvm.sh"
+fi
+export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/usr/local/bin:/usr/bin:$PATH"
+
 # --- Targets on the VPS ---
 DEPLOY_DIR="/home/ubuntu/aniata"
 BRANCH="main"
