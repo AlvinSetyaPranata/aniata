@@ -34,11 +34,21 @@ install_nginx_config() {
   local src="${DEPLOY_DIR}/scripts/aniata.nginx.conf"
   local avail="/etc/nginx/sites-available/aniata"
   local domain="${APP_DOMAIN:-$(hostname)}"
+  # The php-fpm socket name is versioned (/run/php/phpX.Y-fpm.sock); resolve it
+  # from the installed PHP version instead of hardcoding 8.3.
+  local php_ver sock
+  php_ver=$(ls /etc/php 2>/dev/null | head -n1)
+  sock="/run/php/php${php_ver}-fpm.sock"
+  if [ ! -S "${sock}" ]; then
+    sock=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -n1)
+  fi
+  echo "    php-fpm socket: ${sock:-<unknown>}"
   # The stock default site listens on :80, which is already taken by the
   # existing app on this box. Drop it so our nginx only binds :83.
   sudo rm -f /etc/nginx/sites-enabled/default
   sudo cp "${src}" "${avail}"
   sudo sed -i "s/__APP_DOMAIN__/${domain}/g" "${avail}"
+  sudo sed -i "s#__PHP_FPM_SOCK__#${sock}#g" "${avail}"
   sudo ln -sf "${avail}" /etc/nginx/sites-enabled/aniata
   sudo nginx -t
 }
