@@ -11,7 +11,7 @@ export default function Login({ onLogin }) {
     setError('')
     setBusy(true)
     onLogin(email, password)
-      .catch((err) => setError(err.message || 'Login failed'))
+      .catch((err) => setError(err.message || 'Gagal masuk'))
       .finally(() => setBusy(false))
   }
 
@@ -22,7 +22,7 @@ export default function Login({ onLogin }) {
         className="w-full max-w-sm bg-surface border border-line rounded-xl p-8 shadow-sm"
       >
         <h1 className="font-serif text-3xl mb-1">Aniata</h1>
-        <p className="text-muted text-sm mb-6">Admin sign in</p>
+        <p className="text-muted text-sm mb-6">Masuk Admin</p>
 
         <label className="block text-sm font-medium mb-1">Email</label>
         <input
@@ -34,7 +34,7 @@ export default function Login({ onLogin }) {
           autoComplete="username"
         />
 
-        <label className="block text-sm font-medium mb-1">Password</label>
+        <label className="block text-sm font-medium mb-1">Kata Sandi</label>
         <input
           type="password"
           required
@@ -51,7 +51,7 @@ export default function Login({ onLogin }) {
           disabled={busy}
           className="w-full bg-ink text-paper rounded-lg py-2.5 font-medium hover:opacity-90 disabled:opacity-50"
         >
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? 'Masuk…' : 'Masuk'}
         </button>
       </form>
     </div>

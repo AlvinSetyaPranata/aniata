@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { api, clearToken, getToken, setToken } from './api'
 import Login from './pages/Login'
 import Products from './pages/Products'
+import Dashboard from './pages/Dashboard'
+import Sidebar from './components/Sidebar'
 
 export default function App() {
   const [token, setTokenState] = useState(getToken())
   const [ready, setReady] = useState(false)
+  const [view, setView] = useState('dashboard')
 
   useEffect(() => {
     // Verify any stored token is still valid.
@@ -43,5 +46,12 @@ export default function App() {
   if (!ready) return null
   if (!token) return <Login onLogin={login} />
 
-  return <Products onLogout={logout} />
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar view={view} setView={setView} onLogout={logout} />
+      <main className="flex-1 min-w-0">
+        {view === 'dashboard' ? <Dashboard /> : <Products />}
+      </main>
+    </div>
+  )
 }

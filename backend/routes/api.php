@@ -20,5 +20,6 @@ Route::post('/admin/login', [AdminController::class, 'login']);
 
 Route::middleware('admin.auth')->group(function () {
     Route::post('/admin/logout', [AdminController::class, 'logout']);
+    Route::get('/admin/stats', [AdminController::class, 'stats']);
     Route::apiResource('admin/products', AdminProductController::class);
 });

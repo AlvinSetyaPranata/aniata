@@ -81,55 +81,55 @@ function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
         onSubmit={submit}
         className="my-8 w-full max-w-2xl bg-surface border border-line rounded-xl p-6 shadow-lg"
       >
-        <h2 className="font-serif text-2xl mb-4">{initial ? 'Edit product' : 'New product'}</h2>
+        <h2 className="font-serif text-2xl mb-4">{initial ? 'Edit Produk' : 'Produk Baru'}</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className={label}>Name *</label>
+            <label className={label}>Nama *</label>
             <input className={field} value={form.name} onChange={set('name')} required />
           </div>
           <div>
-            <label className={label}>Slug (optional)</label>
+            <label className={label}>Slug (opsional)</label>
             <input className={field} value={form.slug} onChange={set('slug')} />
           </div>
           <div>
-            <label className={label}>Price (IDR) *</label>
+            <label className={label}>Harga (IDR) *</label>
             <input type="number" className={field} value={form.price} onChange={set('price')} required min="0" />
           </div>
           <div>
-            <label className={label}>Discount %</label>
+            <label className={label}>Diskon %</label>
             <input type="number" className={field} value={form.discount} onChange={set('discount')} min="0" max="100" />
           </div>
           <div>
-            <label className={label}>Accent (hex)</label>
+            <label className={label}>Aksen (hex)</label>
             <input className={field} value={form.accent} onChange={set('accent')} placeholder="#b03052" />
           </div>
           <div className="col-span-2">
-            <label className={label}>Blurb</label>
+            <label className={label}>Cuplikan</label>
             <input className={field} value={form.blurb} onChange={set('blurb')} />
           </div>
           <div className="col-span-2">
-            <label className={label}>Description</label>
+            <label className={label}>Deskripsi</label>
             <textarea className={field} rows={3} value={form.description} onChange={set('description')} />
           </div>
           <div className="col-span-2">
-            <label className={label}>Image (main URL)</label>
+            <label className={label}>Gambar (URL utama)</label>
             <input className={field} value={form.image} onChange={set('image')} />
           </div>
           <div className="col-span-2">
-            <label className={label}>Images (one URL per line)</label>
+            <label className={label}>Gambar (satu URL per baris)</label>
             <textarea className={field} rows={3} value={form.images} onChange={set('images')} />
           </div>
           <div className="col-span-2">
-            <label className={label}>Colors (JSON)</label>
+            <label className={label}>Warna (JSON)</label>
             <textarea className={field} rows={2} value={form.colors} onChange={set('colors')} placeholder='[{"name":"Rose","hex":"#b03052","images":[]}]' />
           </div>
           <div className="col-span-2">
-            <label className={label}>Sizes (JSON array)</label>
+            <label className={label}>Ukuran (array JSON)</label>
             <textarea className={field} rows={2} value={form.sizes} onChange={set('sizes')} placeholder='["S","M","L"]' />
           </div>
           <div className="col-span-2">
-            <label className={label}>Stock (JSON object)</label>
+            <label className={label}>Stok (objek JSON)</label>
             <textarea className={field} rows={2} value={form.stock} onChange={set('stock')} placeholder='{"Rose|S":3,"Rose|M":1}' />
           </div>
         </div>
@@ -138,10 +138,10 @@ function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
 
         <div className="flex justify-end gap-3 mt-6">
           <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg border border-line hover:bg-paper">
-            Cancel
+            Batal
           </button>
           <button type="submit" disabled={busy} className="px-4 py-2 rounded-lg bg-ink text-paper font-medium hover:opacity-90 disabled:opacity-50">
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? 'Menyimpan…' : 'Simpan'}
           </button>
         </div>
       </form>
@@ -183,12 +183,12 @@ export default function Products({ onLogout }) {
         setEditing(null)
         load()
       })
-      .catch((e) => setError(e.message || 'Save failed'))
+      .catch((e) => setError(e.message || 'Gagal menyimpan'))
       .finally(() => setBusy(false))
   }
 
   function remove(item) {
-    if (!confirm(`Delete "${item.name}"?`)) return
+    if (!confirm(`Hapus "${item.name}"?`)) return
     api
       .deleteProduct(item.id)
       .then(load)
@@ -201,8 +201,8 @@ export default function Products({ onLogout }) {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <header className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-serif text-3xl">Products</h1>
-          <p className="text-muted text-sm">{items.length} items</p>
+          <h1 className="font-serif text-3xl">Produk</h1>
+          <p className="text-muted text-sm">{items.length} produk</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -212,10 +212,7 @@ export default function Products({ onLogout }) {
             }}
             className="bg-ink text-paper px-4 py-2 rounded-lg font-medium hover:opacity-90"
           >
-            New product
-          </button>
-          <button onClick={onLogout} className="border border-line px-4 py-2 rounded-lg hover:bg-paper">
-            Log out
+            Produk Baru
           </button>
         </div>
       </header>
@@ -223,18 +220,18 @@ export default function Products({ onLogout }) {
       {error && <p className="text-rose text-sm mb-4">{error}</p>}
 
       {loading ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted">Memuat…</p>
       ) : (
         <div className="bg-surface border border-line rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-paper text-muted">
               <tr>
-                <th className="text-left font-medium px-4 py-3">ID</th>
-                <th className="text-left font-medium px-4 py-3">Name</th>
-                <th className="text-left font-medium px-4 py-3">Price</th>
-                <th className="text-left font-medium px-4 py-3">Discount</th>
-                <th className="text-left font-medium px-4 py-3">Slug</th>
-                <th className="text-right font-medium px-4 py-3">Actions</th>
+              <th className="text-left font-medium px-4 py-3">ID</th>
+              <th className="text-left font-medium px-4 py-3">Nama</th>
+              <th className="text-left font-medium px-4 py-3">Harga</th>
+              <th className="text-left font-medium px-4 py-3">Diskon</th>
+              <th className="text-left font-medium px-4 py-3">Slug</th>
+              <th className="text-right font-medium px-4 py-3">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -256,7 +253,7 @@ export default function Products({ onLogout }) {
                       Edit
                     </button>
                     <button onClick={() => remove(p)} className="text-rose underline">
-                      Delete
+                      Hapus
                     </button>
                   </td>
                 </tr>

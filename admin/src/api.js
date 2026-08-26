@@ -27,7 +27,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
   if (res.status === 401) {
     clearToken()
-    throw new AuthError('Session expired or invalid.')
+    throw new AuthError('Sesi telah berakhir atau tidak valid.')
   }
 
   const text = await res.text()
@@ -45,6 +45,7 @@ export const api = {
   login: (email, password) =>
     request('/admin/login', { method: 'POST', body: { email, password }, auth: false }),
   logout: () => request('/admin/logout', { method: 'POST' }),
+  stats: () => request('/admin/stats'),
   listProducts: () => request('/admin/products'),
   createProduct: (payload) => request('/admin/products', { method: 'POST', body: payload }),
   updateProduct: (id, payload) =>
