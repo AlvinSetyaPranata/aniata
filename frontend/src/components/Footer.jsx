@@ -27,7 +27,7 @@ const LINK_COLUMNS = (t) => [
   },
 ]
 
-export default function Footer({ products = [], hideNewIn = false }) {
+export default function Footer({ products = [], hideNewIn = false, hideSignup = false }) {
   const { t } = useLanguage()
   const newIn = products.slice(0, 3)
   const [email, setEmail] = useState('')
@@ -69,7 +69,8 @@ export default function Footer({ products = [], hideNewIn = false }) {
         </section>
       )}
 
-      <section className="footer__signup">
+      {!hideSignup && (
+        <section className="footer__signup">
         <div className="footer__signup-copy">
           <h2 className="footer__title">{t('stayClose')}</h2>
           <p className="footer__signup-text">{t('signupText')}</p>
@@ -89,7 +90,8 @@ export default function Footer({ products = [], hideNewIn = false }) {
             <button type="submit">{t('join')}</button>
           </form>
         )}
-      </section>
+        </section>
+      )}
 
       <nav className="footer__cols" aria-label="Footer">
         {LINK_COLUMNS(t).map((col) => (

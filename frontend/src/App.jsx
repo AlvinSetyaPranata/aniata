@@ -74,7 +74,7 @@ export default function App() {
         </>
       )}
 
-      <Footer products={products} hideNewIn={!!detail} />
+      <Footer products={products} hideNewIn={!!detail} hideSignup={!!detail} />
 
       <div className={`toast ${lastAdded ? 'toast--show' : ''}`} role="status">
         {t('addedToCart')}
