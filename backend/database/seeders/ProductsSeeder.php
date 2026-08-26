@@ -180,6 +180,17 @@ class ProductsSeeder extends Seeder
                 'https://picsum.photos/seed/' . $slug . '-2/900/1200',
                 'https://picsum.photos/seed/' . $slug . '-3/900/1200',
             ];
+            if (!empty($item['colors'])) {
+                $item['colors'] = array_map(function ($c) use ($slug) {
+                    $cSlug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $c['name']));
+                    $c['images'] = [
+                        'https://picsum.photos/seed/' . $slug . '-' . $cSlug . '-1/900/1200',
+                        'https://picsum.photos/seed/' . $slug . '-' . $cSlug . '-2/900/1200',
+                        'https://picsum.photos/seed/' . $slug . '-' . $cSlug . '-3/900/1200',
+                    ];
+                    return $c;
+                }, $item['colors']);
+            }
             \App\Models\Product::updateOrCreate(
                 ['slug' => $slug],
                 array_merge($item, [

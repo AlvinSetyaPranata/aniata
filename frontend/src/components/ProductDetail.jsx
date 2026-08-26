@@ -10,11 +10,6 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
   const [color, setColor] = useState('')
   const [size, setSize] = useState('')
 
-  const gallery = product.images?.length
-    ? product.images
-    : product.image
-      ? [product.image]
-      : []
   const discounted = product.discount > 0
   const price = effectivePrice(product)
 
@@ -24,6 +19,16 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
 
   const stockOf = (c, s) =>
     product.stock ? (product.stock[`${c}|${s}`] ?? 0) : null
+
+  const colorObj = colors.find((c) => c.name === color)
+  const gallerySource = colorObj?.images?.length
+    ? colorObj.images
+    : product.images?.length
+      ? product.images
+      : product.image
+        ? [product.image]
+        : []
+  const gallery = gallerySource
 
   useEffect(() => {
     setActive(0)
@@ -42,6 +47,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
 
   function pickColor(c) {
     setColor(c)
+    setActive(0)
     if (sizes.length) {
       const ok = sizes.find((sz) => stockOf(c, sz) > 0)
       setSize(ok ?? sizes[0])
