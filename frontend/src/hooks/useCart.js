@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { effectivePrice } from '../data/products'
 
 const STORAGE_KEY = 'aniata_cart'
 
@@ -61,7 +62,10 @@ export function useCart(productMap = {}) {
     .map(([id, qty]) => ({ product: productMap[id], qty }))
 
   const count = lines.reduce((sum, { qty }) => sum + qty, 0)
-  const total = lines.reduce((sum, { product, qty }) => sum + product.price * qty, 0)
+  const total = lines.reduce(
+    (sum, { product, qty }) => sum + effectivePrice(product) * qty,
+    0,
+  )
 
   return { lines, count, total, add, setQty, remove, clear }
 }

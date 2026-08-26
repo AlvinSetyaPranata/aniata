@@ -42,6 +42,10 @@ const dict = {
     linkFaq: 'FAQ',
     legal: 'Aniata. Made to be kept.',
     loadError: 'Could not load products: {error}',
+    viewProduct: 'View',
+    qty: 'Qty',
+    save: 'Save {pct}%',
+    addedToCart: 'Added to cart',
   },
   id: {
     cart: 'Tas',
@@ -84,6 +88,10 @@ const dict = {
     linkFaq: 'FAQ',
     legal: 'Aniata. Dibuat untuk dijaga.',
     loadError: 'Tidak dapat memuat produk: {error}',
+    viewProduct: 'Lihat',
+    qty: 'Jml',
+    save: 'Hemat {pct}%',
+    addedToCart: 'Ditambah ke tas',
   },
 }
 

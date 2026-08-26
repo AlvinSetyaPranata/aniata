@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Header from './components/Header'
 import Hero from './components/Hero'
 import ProductCard from './components/ProductCard'
+import ProductDetail from './components/ProductDetail'
 import CartDrawer from './components/CartDrawer'
 import Footer from './components/Footer'
 import { useCart } from './hooks/useCart'
@@ -21,6 +22,7 @@ export default function App() {
   )
   const cart = useCart(productMap)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selected, setSelected] = useState(null)
   const [lastAdded, setLastAdded] = useState(null)
 
   useEffect(() => {
@@ -33,8 +35,8 @@ export default function App() {
       .catch((err) => setError(err.message))
   }, [])
 
-  function handleAdd(id) {
-    cart.add(id)
+  function handleAdd(id, qty = 1) {
+    cart.add(id, qty)
     setLastAdded(id)
     window.clearTimeout(handleAdd._t)
     handleAdd._t = window.setTimeout(() => setLastAdded(null), 1600)
@@ -55,6 +57,7 @@ export default function App() {
               product={product}
               index={i}
               onAdd={handleAdd}
+              onOpen={setSelected}
             />
           ))}
       </main>
@@ -62,8 +65,19 @@ export default function App() {
       <Footer products={products} />
 
       <div className={`toast ${lastAdded ? 'toast--show' : ''}`} role="status">
-        Added to cart
+        {t('addedToCart')}
       </div>
+
+      {selected && (
+        <ProductDetail
+          product={selected}
+          onClose={() => setSelected(null)}
+          onAdd={(id, qty) => {
+            handleAdd(id, qty)
+            setSelected(null)
+          }}
+        />
+      )}
 
       <CartDrawer
         open={drawerOpen}

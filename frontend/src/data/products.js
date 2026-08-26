@@ -5,3 +5,8 @@ export function formatPrice(value) {
     maximumFractionDigits: 0,
   }).format(value)
 }
+
+export function effectivePrice(product) {
+  if (!product?.discount) return product.price
+  return Math.round(product.price * (1 - product.discount / 100))
+}

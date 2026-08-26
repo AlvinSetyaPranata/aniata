@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { formatPrice } from '../data/products'
+import { formatPrice, effectivePrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
 
 export default function CartDrawer({
@@ -61,7 +61,14 @@ export default function CartDrawer({
                   <div className="line__info">
                     <span className="line__name">{product.name}</span>
                     <span className="line__price">
-                      {formatPrice(product.price)}
+                      {product.discount ? (
+                        <span className="line__price-wrap">
+                          <s>{formatPrice(product.price)}</s>
+                          <strong>{formatPrice(effectivePrice(product))}</strong>
+                        </span>
+                      ) : (
+                        formatPrice(product.price)
+                      )}
                     </span>
                   </div>
                   <div className="line__qty">

@@ -11,7 +11,16 @@ class Product extends Model
         'slug',
         'price',
         'blurb',
+        'description',
         'accent',
         'image',
+        'images',
+        'discount',
+    ];
+
+    protected $casts = [
+        'price' => 'integer',
+        'discount' => 'integer',
+        'images' => 'array',
     ];
 }
