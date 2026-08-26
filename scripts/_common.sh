@@ -18,6 +18,7 @@ DEPLOY_DIR="/home/ubuntu/aniata"
 BRANCH="main"
 FE_DIR="${DEPLOY_DIR}/frontend"
 BE_DIR="${DEPLOY_DIR}/backend"
+ADMIN_DIR="${DEPLOY_DIR}/admin"
 
 # Pull latest, discarding any local drift in the working tree.
 git_pull() {
@@ -40,12 +41,11 @@ php_fpm_ver() {
   echo "$v"
 }
 
-# Install the nginx site config (Aniata SPA on :3001 + /api -> php-fpm),
-# served alongside any existing app already bound to :80/:443.
-install_nginx_config() {
-  echo "==> Installing nginx site config"
-  local src="${DEPLOY_DIR}/scripts/aniata.nginx.conf"
-  local avail="/etc/nginx/sites-available/aniata"
+# Install a single nginx site config (substitute domain + php-fpm socket).
+install_nginx_site() {
+  local src="$1" name="$2"
+  echo "==> Installing nginx site config: ${name}"
+  local avail="/etc/nginx/sites-available/${name}"
   local domain="${APP_DOMAIN:-$(hostname)}"
   # The php-fpm socket name is versioned (/run/php/phpX.Y-fpm.sock); resolve it
   # from the installed PHP version instead of hardcoding 8.3.
@@ -53,9 +53,6 @@ install_nginx_config() {
   php_ver=$(php_fpm_ver)
   sock="/run/php/php${php_ver}-fpm.sock"
   echo "    php-fpm socket: ${sock:-<unknown>}"
-  # The stock default site listens on :80, which is already taken by the
-  # existing app on this box. Drop it so our nginx only binds :83.
-  sudo rm -f /etc/nginx/sites-enabled/default
   sudo cp "${src}" "${avail}"
   sudo sed -i "s/__APP_DOMAIN__/${domain}/g" "${avail}"
   sudo sed -i "s#__PHP_FPM_SOCK__#${sock}#g" "${avail}"
@@ -65,7 +62,21 @@ install_nginx_config() {
     echo "ERROR: php-fpm socket placeholder not substituted (sock='${sock}')" >&2
     exit 1
   fi
-  sudo ln -sf "${avail}" /etc/nginx/sites-enabled/aniata
+  sudo ln -sf "${avail}" "/etc/nginx/sites-enabled/${name}"
+}
+
+# Install the nginx site configs: the store SPA on :83 and the admin SPA on :84,
+# both proxying /api -> php-fpm. Served alongside the existing app on :80/:443.
+install_nginx_config() {
+  echo "==> Installing nginx site configs"
+  # The stock default site listens on :80, already taken; drop it so nginx only
+  # binds our ports (:83/:84).
+  sudo rm -f /etc/nginx/sites-enabled/default
+  install_nginx_site "${DEPLOY_DIR}/scripts/aniata.nginx.conf" "aniata"
+  install_nginx_site "${DEPLOY_DIR}/scripts/aniata-admin.nginx.conf" "aniata-admin"
+  # Admin panel is served on :84 — open the host firewall (the Tencent Cloud
+  # security group must also allow inbound TCP :84).
+  sudo ufw allow 84 2>/dev/null || true
   sudo nginx -t
 }
 
@@ -85,6 +96,24 @@ build_frontend() {
   echo "==> Restarting frontend (pm2)"
   if pm2 describe aniata-fe > /dev/null 2>&1; then
     pm2 restart aniata-fe
+  else
+    pm2 start ecosystem.config.cjs
+  fi
+  pm2 save
+}
+
+# Install deps, build the admin Vite bundle, and (re)start under pm2.
+build_admin() {
+  echo "==> Building admin frontend"
+  cd "${ADMIN_DIR}"
+  # The admin talks to the API same-origin (nginx :84 proxies /api -> php-fpm).
+  export VITE_API_URL="${VITE_API_URL:-/api}"
+  npm ci
+  npm run build
+
+  echo "==> Restarting admin (pm2)"
+  if pm2 describe aniata-admin > /dev/null 2>&1; then
+    pm2 restart aniata-admin
   else
     pm2 start ecosystem.config.cjs
   fi

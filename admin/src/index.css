@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-paper: #f1efe9;
+  --color-surface: #ffffff;
+  --color-ink: #15130e;
+  --color-muted: #6e6a60;
+  --color-line: #d9d5cb;
+  --color-rose: #b03052;
+
+  --font-serif: 'Didot', 'Bodoni MT', 'Hoefler Text', 'Playfair Display', Georgia,
+    serif;
+  --font-sans: 'Helvetica Neue', Arial, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+}
