@@ -22,7 +22,7 @@ export default function App() {
   )
   const cart = useCart(productMap)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [detailId, setDetailId] = useState(null)
+  const [detail, setDetail] = useState(null)
   const [lastAdded, setLastAdded] = useState(null)
 
   useEffect(() => {
@@ -42,8 +42,6 @@ export default function App() {
     handleAdd._t = window.setTimeout(() => setLastAdded(null), 1600)
   }
 
-  const detail = detailId ? productMap[detailId] : null
-
   return (
     <div className="store">
       <Header count={cart.count} onOpenCart={() => setDrawerOpen(true)} />
@@ -52,8 +50,8 @@ export default function App() {
         <ProductDetail
           product={detail}
           products={products}
-          onBack={() => setDetailId(null)}
-          onOpen={setDetailId}
+          onBack={() => setDetail(null)}
+          onOpen={setDetail}
           onAdd={handleAdd}
         />
       ) : (
@@ -69,7 +67,7 @@ export default function App() {
                   product={product}
                   index={i}
                   onAdd={handleAdd}
-                  onOpen={setDetailId}
+                  onOpen={setDetail}
                 />
               ))}
           </main>
