@@ -110,6 +110,13 @@ ensure_permissions() {
   echo "==> Aligning web-service users to deploy user (ubuntu)"
   sudo sed -i 's/^user .*;/user ubuntu;/' /etc/nginx/nginx.conf
 
+  # nginx now runs as ubuntu; its temp/proxy dirs are still owned by www-data,
+  # so workers can't buffer upstream responses (e.g. SPA assets) -> 403/blank
+  # page. Hand the whole temp tree to ubuntu.
+  if [ -d /var/lib/nginx ]; then
+    sudo chown -R ubuntu:ubuntu /var/lib/nginx
+  fi
+
   # php-fpm pool files live under a versioned dir (/etc/php/X.Y/fpm/pool.d);
   # edit every one we find so we don't depend on a hardcoded PHP version.
   local pool
