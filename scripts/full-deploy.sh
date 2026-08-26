@@ -11,12 +11,14 @@ reload_web
 
 # End-to-end sanity: hit the API and the SPA through nginx (127.0.0.1:83).
 # php-fpm can be down while the deploy "succeeds" (artisan uses CLI php), so we
-# verify the actual web tier here and WARN loudly if it isn't serving.
+# verify the actual web tier here and FAIL the deploy if it isn't serving, so CI
+# surfaces a broken deploy instead of reporting success.
 sleep 2
 api_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:83/api/products 2>/dev/null || echo 000)
 spa_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:83/ 2>/dev/null || echo 000)
 echo "==> Health check: API=${api_code} SPA=${spa_code}"
 if [ "$api_code" != "200" ] || [ "$spa_code" != "200" ]; then
-  echo "WARN: web tier not fully healthy after deploy (API=${api_code}, SPA=${spa_code})"
+  echo "ERROR: web tier not healthy after deploy (API=${api_code}, SPA=${spa_code})" >&2
+  exit 1
 fi
 echo "==> Full deploy complete"
