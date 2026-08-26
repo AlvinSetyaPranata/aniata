@@ -27,6 +27,19 @@ git_pull() {
   git reset --hard "origin/${BRANCH}"
 }
 
+# Resolve the active php-fpm version. The box may have several PHP versions
+# installed (/etc/php/8.1, /etc/php/8.3, ...); `ls /etc/php | head -n1` would
+# pick the wrong (lowest) one and point nginx at a non-existent socket -> 502.
+# Prefer the version whose php-fpm is actually listening, then the active CLI
+# php (the one Laravel's artisan uses), then fall back to /etc/php.
+php_fpm_ver() {
+  local v
+  v=$(sudo ss -xln 2>/dev/null | grep -oP 'php\K[0-9.]+(?=-fpm\.sock)' | head -n1)
+  [ -z "$v" ] && v=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null)
+  [ -z "$v" ] && v=$(ls /etc/php 2>/dev/null | head -n1)
+  echo "$v"
+}
+
 # Install the nginx site config (Aniata SPA on :3001 + /api -> php-fpm),
 # served alongside any existing app already bound to :80/:443.
 install_nginx_config() {
@@ -37,18 +50,7 @@ install_nginx_config() {
   # The php-fpm socket name is versioned (/run/php/phpX.Y-fpm.sock); resolve it
   # from the installed PHP version instead of hardcoding 8.3.
   local php_ver sock
-  # Resolve the php-fpm version. The box can have several PHP versions
-  # installed (/etc/php/8.1, /etc/php/8.3, ...); `ls /etc/php | head -n1` would
-  # pick the wrong (lowest) one and point nginx at a non-existent socket -> 502.
-  # Prefer the version whose php-fpm is actually listening, then the active CLI
-  # php (the one Laravel's artisan uses), then fall back to /etc/php.
-  php_ver=$(sudo ss -xln 2>/dev/null | grep -oP 'php\K[0-9.]+(?=-fpm\.sock)' | head -n1)
-  if [ -z "$php_ver" ]; then
-    php_ver=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null)
-  fi
-  if [ -z "$php_ver" ]; then
-    php_ver=$(ls /etc/php 2>/dev/null | head -n1)
-  fi
+  php_ver=$(php_fpm_ver)
   sock="/run/php/php${php_ver}-fpm.sock"
   echo "    php-fpm socket: ${sock:-<unknown>}"
   # The stock default site listens on :80, which is already taken by the
@@ -116,6 +118,9 @@ build_backend() {
 ensure_permissions() {
   echo "==> Aligning web-service users to deploy user (ubuntu)"
   sudo sed -i 's/^user .*;/user ubuntu;/' /etc/nginx/nginx.conf
+  local php_ver sock
+  php_ver=$(php_fpm_ver)
+  sock="/run/php/php${php_ver}-fpm.sock"
 
   # nginx now runs as ubuntu; its temp/proxy dirs are still owned by www-data,
   # so workers can't buffer upstream responses (e.g. SPA assets) -> 403/blank
