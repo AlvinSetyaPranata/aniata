@@ -14,6 +14,11 @@ export default function CartDrawer({
   const closeRef = useRef(null)
   const { t } = useLanguage()
 
+  const WA_NUMBER = String(
+    import.meta.env.VITE_WHATSAPP_NUMBER ?? '6281234567890',
+  ).replace(/\D/g, '')
+  const STORE_NAME = import.meta.env.VITE_STORE_NAME ?? 'Aniata'
+
   useEffect(() => {
     if (!open) return
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -21,6 +26,25 @@ export default function CartDrawer({
     closeRef.current?.focus()
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
+
+  function handleCheckout() {
+    if (!lines.length) return
+    const head = `Halo ${STORE_NAME}, saya ingin memesan:\n`
+    const body = lines
+      .map((l, i) => {
+        const variant = [l.color, l.size].filter(Boolean).join(' · ')
+        const lineTotal = formatPrice(effectivePrice(l.product) * l.qty)
+        return `${i + 1}. ${l.product.name}${variant ? ` (${variant})` : ''} ×${l.qty} — ${lineTotal}`
+      })
+      .join('\n')
+    const foot = `\nTotal: ${formatPrice(total)}`
+    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
+      head + body + foot,
+    )}`
+    window.open(url, '_blank', 'noopener')
+    clear()
+    onClose()
+  }
 
   return (
     <div className={`drawer ${open ? 'drawer--open' : ''}`} aria-hidden={!open}>
@@ -110,7 +134,11 @@ export default function CartDrawer({
                 <span>{t('subtotal')}</span>
                 <strong>{formatPrice(total)}</strong>
               </div>
-              <button type="button" className="drawer__checkout">
+              <button
+                type="button"
+                className="drawer__checkout"
+                onClick={handleCheckout}
+              >
                 {t('checkout')}
               </button>
               <button

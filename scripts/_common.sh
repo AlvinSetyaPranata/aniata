@@ -75,6 +75,10 @@ build_frontend() {
   cd "${FE_DIR}"
   # Production must talk to the API same-origin (nginx proxies /api -> php-fpm).
   export VITE_API_URL="${VITE_API_URL:-/api}"
+  # Seller WhatsApp number (digits, country code, no +) and store name used by the
+  # checkout "send order to WhatsApp" flow. Override per host via environment.
+  export VITE_WHATSAPP_NUMBER="${VITE_WHATSAPP_NUMBER:-6281234567890}"
+  export VITE_STORE_NAME="${VITE_STORE_NAME:-Aniata}"
   npm ci
   npm run build
 
