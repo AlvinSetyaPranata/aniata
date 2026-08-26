@@ -22,7 +22,7 @@ export default function App() {
   )
   const cart = useCart(productMap)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [selected, setSelected] = useState(null)
+  const [detailId, setDetailId] = useState(null)
   const [lastAdded, setLastAdded] = useState(null)
 
   useEffect(() => {
@@ -42,42 +42,45 @@ export default function App() {
     handleAdd._t = window.setTimeout(() => setLastAdded(null), 1600)
   }
 
+  const detail = detailId ? productMap[detailId] : null
+
   return (
     <div className="store">
       <Header count={cart.count} onOpenCart={() => setDrawerOpen(true)} />
 
-      <Hero />
+      {detail ? (
+        <ProductDetail
+          product={detail}
+          products={products}
+          onBack={() => setDetailId(null)}
+          onOpen={setDetailId}
+          onAdd={handleAdd}
+        />
+      ) : (
+        <>
+          <Hero />
 
-      <main className="grid" id="collection" aria-label="Products">
-        {error && <p className="grid__error">{t('loadError', { error })}</p>}
-        {!error &&
-          products.map((product, i) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={i}
-              onAdd={handleAdd}
-              onOpen={setSelected}
-            />
-          ))}
-      </main>
+          <main className="grid" id="collection" aria-label="Products">
+            {error && <p className="grid__error">{t('loadError', { error })}</p>}
+            {!error &&
+              products.map((product, i) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={i}
+                  onAdd={handleAdd}
+                  onOpen={setDetailId}
+                />
+              ))}
+          </main>
+        </>
+      )}
 
       <Footer products={products} />
 
       <div className={`toast ${lastAdded ? 'toast--show' : ''}`} role="status">
         {t('addedToCart')}
       </div>
-
-      {selected && (
-        <ProductDetail
-          product={selected}
-          onClose={() => setSelected(null)}
-          onAdd={(id, qty) => {
-            handleAdd(id, qty)
-            setSelected(null)
-          }}
-        />
-      )}
 
       <CartDrawer
         open={drawerOpen}

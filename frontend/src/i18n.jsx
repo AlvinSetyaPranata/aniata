@@ -46,6 +46,8 @@ const dict = {
     qty: 'Qty',
     save: 'Save {pct}%',
     addedToCart: 'Added to cart',
+    back: 'Back',
+    youMayLike: 'You may also like',
   },
   id: {
     cart: 'Tas',
@@ -92,6 +94,8 @@ const dict = {
     qty: 'Jml',
     save: 'Hemat {pct}%',
     addedToCart: 'Ditambah ke tas',
+    back: 'Kembali',
+    youMayLike: 'Mungkin Anda suka',
   },
 }
 
