@@ -37,11 +37,12 @@ install_nginx_config() {
   # The php-fpm socket name is versioned (/run/php/phpX.Y-fpm.sock); resolve it
   # from the installed PHP version instead of hardcoding 8.3.
   local php_ver sock
+  # Derive the socket path deterministically from the installed PHP version
+  # (/run/php/phpX.Y-fpm.sock). Do NOT depend on the socket file existing yet —
+  # php-fpm is restarted later in the deploy, so the file may be absent here and
+  # a fallback lookup would blank the path and ship a broken config.
   php_ver=$(ls /etc/php 2>/dev/null | head -n1)
   sock="/run/php/php${php_ver}-fpm.sock"
-  if [ ! -S "${sock}" ]; then
-    sock=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -n1)
-  fi
   echo "    php-fpm socket: ${sock:-<unknown>}"
   # The stock default site listens on :80, which is already taken by the
   # existing app on this box. Drop it so our nginx only binds :83.
@@ -49,6 +50,12 @@ install_nginx_config() {
   sudo cp "${src}" "${avail}"
   sudo sed -i "s/__APP_DOMAIN__/${domain}/g" "${avail}"
   sudo sed -i "s#__PHP_FPM_SOCK__#${sock}#g" "${avail}"
+  # Verify the placeholder was actually replaced; otherwise nginx would try to
+  # connect to a literal file named __PHP_FPM_SOCK__ and 502. Fail loudly.
+  if grep -q '__PHP_FPM_SOCK__' "${avail}"; then
+    echo "ERROR: php-fpm socket placeholder not substituted (sock='${sock}')" >&2
+    exit 1
+  fi
   sudo ln -sf "${avail}" /etc/nginx/sites-enabled/aniata
   sudo nginx -t
 }
