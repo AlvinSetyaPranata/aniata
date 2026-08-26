@@ -27,7 +27,7 @@ const LINK_COLUMNS = (t) => [
   },
 ]
 
-export default function Footer({ products = [] }) {
+export default function Footer({ products = [], hideNewIn = false }) {
   const { t } = useLanguage()
   const newIn = products.slice(0, 3)
   const [email, setEmail] = useState('')
@@ -42,30 +42,32 @@ export default function Footer({ products = [] }) {
 
   return (
     <footer className="footer">
-      <section className="footer__new" aria-label={t('newIn')}>
-        <div className="footer__new-head">
-          <h2 className="footer__title">{t('newIn')}</h2>
-          <a className="footer__more" href="#collection">
-            {t('viewAll')}
-          </a>
-        </div>
-        <div className="footer__new-grid">
-          {newIn.map((product) => (
-            <article key={product.id} className="footer__new-card">
-              <div className="footer__new-media">
-                <img src={product.image} alt={product.name} loading="lazy" />
-              </div>
-              <div className="footer__new-meta">
-                <span className="footer__new-name">{product.name}</span>
-                <span className="footer__new-price">
-                  {formatPrice(product.price)}
-                </span>
-              </div>
-              <p className="footer__new-blurb">{product.blurb}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      {!hideNewIn && (
+        <section className="footer__new" aria-label={t('newIn')}>
+          <div className="footer__new-head">
+            <h2 className="footer__title">{t('newIn')}</h2>
+            <a className="footer__more" href="#collection">
+              {t('viewAll')}
+            </a>
+          </div>
+          <div className="footer__new-grid">
+            {newIn.map((product) => (
+              <article key={product.id} className="footer__new-card">
+                <div className="footer__new-media">
+                  <img src={product.image} alt={product.name} loading="lazy" />
+                </div>
+                <div className="footer__new-meta">
+                  <span className="footer__new-name">{product.name}</span>
+                  <span className="footer__new-price">
+                    {formatPrice(product.price)}
+                  </span>
+                </div>
+                <p className="footer__new-blurb">{product.blurb}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="footer__signup">
         <div className="footer__signup-copy">
