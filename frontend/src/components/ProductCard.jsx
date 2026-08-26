@@ -1,7 +1,7 @@
 import { formatPrice, effectivePrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
 
-export default function ProductCard({ product, index, onAdd, onOpen }) {
+export default function ProductCard({ product, onAdd, onOpen }) {
   const { t } = useLanguage()
   const cover = product.images?.length ? product.images[0] : product.image
   const discounted = product.discount > 0
@@ -14,23 +14,34 @@ export default function ProductCard({ product, index, onAdd, onOpen }) {
   }
 
   return (
-    <article className="card" style={{ '--tile': product.accent }}>
+    <article
+      className="group flex flex-col"
+      style={{ '--tile': product.accent }}
+    >
       <div
-        className="card__media"
+        className="group relative aspect-[3/4] overflow-hidden border border-line bg-[linear-gradient(160deg,#e9e6df_0%,#dcd8ce_100%)] after:absolute after:inset-0 after:z-[1] after:content-[''] after:bg-[color-mix(in_srgb,var(--tile)_16%,transparent)] after:opacity-0 after:transition-opacity after:duration-[450ms] group-hover:after:opacity-100 group-focus-within:after:opacity-100 max-[720px]:after:opacity-100"
         onClick={() => onOpen(product)}
         aria-label={`${product.name} — ${t('viewProduct')}`}
       >
-        <span className="card__index">{String(index + 1).padStart(2, '0')}</span>
         {discounted && (
-          <span className="card__badge">−{product.discount}%</span>
+          <span className="absolute right-[16px] top-[16px] z-[3] rounded-full bg-rose px-[9px] py-[6px] font-semibold text-[10px] leading-none tracking-[0.1em] text-paper">
+            −{product.discount}%
+          </span>
         )}
-        <img className="card__img" src={cover} alt={product.name} loading="lazy" />
-        <div className="card__overlay">
-          <p className="card__blurb">{product.blurb}</p>
-          <div className="card__actions">
+        <img
+          className="absolute inset-0 z-0 block h-full w-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] group-focus-within:scale-[1.04]"
+          src={cover}
+          alt={product.name}
+          loading="lazy"
+        />
+        <div className="absolute inset-x-0 bottom-0 z-[2] flex translate-y-[101%] flex-col gap-[16px] bg-[linear-gradient(to_top,color-mix(in_srgb,var(--color-paper)_94%,transparent),transparent)] p-[22px] transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-focus-within:translate-y-0 max-[720px]:translate-y-0">
+          <p className="m-0 font-serif text-[15px] italic leading-[1.5] text-ink">
+            {product.blurb}
+          </p>
+          <div className="flex items-center gap-[18px]">
             <button
               type="button"
-              className="card__view"
+              className="self-start border-0 border-b border-ink bg-transparent pb-[5px] font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-ink cursor-pointer transition-opacity duration-200 hover:opacity-60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-[5px]"
               onClick={(e) => {
                 e.stopPropagation()
                 onOpen(product)
@@ -40,7 +51,7 @@ export default function ProductCard({ product, index, onAdd, onOpen }) {
             </button>
             <button
               type="button"
-              className="card__add"
+              className="self-start border-0 border-b border-rose bg-transparent pb-[5px] font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-rose cursor-pointer transition-opacity duration-200 hover:opacity-60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-[5px]"
               onClick={quickAdd}
             >
               {t('addToBag')}
@@ -49,13 +60,17 @@ export default function ProductCard({ product, index, onAdd, onOpen }) {
         </div>
       </div>
 
-      <div className="card__meta">
-        <h3 className="card__name">{product.name}</h3>
-        <span className="card__price">
+      <div className="mt-[16px] flex items-baseline justify-between gap-[14px] border-t border-line px-[2px] pt-[16px]">
+        <h3 className="m-0 font-serif text-[20px] tracking-[0.01em] text-ink">
+          {product.name}
+        </h3>
+        <span className="whitespace-nowrap font-medium text-[12px] leading-none tracking-[0.08em] text-muted">
           {discounted ? (
-            <span className="card__price-wrap">
-              <s>{formatPrice(product.price)}</s>
-              <strong>{formatPrice(effectivePrice(product))}</strong>
+            <span className="inline-flex items-baseline gap-[8px]">
+              <s className="font-medium text-muted">{formatPrice(product.price)}</s>
+              <strong className="font-semibold text-rose">
+                {formatPrice(effectivePrice(product))}
+              </strong>
             </span>
           ) : (
             formatPrice(product.price)

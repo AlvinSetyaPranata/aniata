@@ -47,20 +47,32 @@ export default function CartDrawer({
   }
 
   return (
-    <div className={`drawer ${open ? 'drawer--open' : ''}`} aria-hidden={!open}>
-      <div className="drawer__scrim" onClick={onClose} />
+    <div
+      className={`fixed inset-0 z-40 ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      aria-hidden={!open}
+    >
+      <div
+        className={`absolute inset-0 bg-[rgba(21,19,14,0.4)] transition-opacity duration-300 ${
+          open ? 'opacity-100' : 'opacity-0'
+        }`}
+        onClick={onClose}
+      />
       <aside
-        className="drawer__panel"
+        className={`absolute right-0 top-0 flex h-full w-[min(440px,94vw)] flex-col border-l border-line bg-paper transition-transform duration-[340ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
         role="dialog"
         aria-label={t('cartTitle')}
         aria-modal="true"
       >
-        <div className="drawer__head">
-          <h2 className="drawer__title">{t('cartTitle')}</h2>
+        <div className="flex items-baseline justify-between border-b border-line px-[30px] pb-[22px] pt-[28px]">
+          <h2 className="m-0 font-serif text-[26px] tracking-[0.02em] text-ink">
+            {t('cartTitle')}
+          </h2>
           <button
             ref={closeRef}
             type="button"
-            className="drawer__close"
+            className="grid h-[34px] w-[34px] cursor-pointer place-items-center rounded-full border border-line bg-surface text-[13px] text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-ink focus-visible:outline-offset-[4px]"
             onClick={onClose}
             aria-label={t('closeAria')}
           >
@@ -69,48 +81,60 @@ export default function CartDrawer({
         </div>
 
         {lines.length === 0 ? (
-          <p className="drawer__empty">{t('cartEmpty')}</p>
+          <p className="px-[30px] py-[40px] font-serif text-[16px] italic leading-[1.6] text-muted">
+            {t('cartEmpty')}
+          </p>
         ) : (
           <>
-            <ul className="drawer__lines">
-               {lines.map(({ key, product, qty, color, size }) => (
-                <li key={key} className="line">
+            <ul className="m-0 flex-1 list-none overflow-y-auto px-[30px] py-[4px]">
+              {lines.map(({ key, product, qty, color, size }) => (
+                <li
+                  key={key}
+                  className="grid grid-cols-[56px_1fr] items-center gap-x-[16px] gap-y-[4px] border-b border-line py-[22px] [grid-template-areas:'tile_info'_'tile_qty']"
+                >
                   <img
-                    className="line__tile"
+                    className="[grid-area:tile] block h-[72px] w-[56px] border border-line bg-[linear-gradient(160deg,#e9e6df,#dcd8ce)] object-cover"
                     src={product.image}
                     alt=""
                     loading="lazy"
-                    style={{ '--tile': product.accent }}
                   />
-                  <div className="line__info">
-                    <span className="line__name">{product.name}</span>
+                  <div className="[grid-area:info] flex flex-col gap-[4px]">
+                    <span className="font-serif text-[17px] leading-[1.2] text-ink">
+                      {product.name}
+                    </span>
                     {(color || size) && (
-                      <span className="line__variant">
+                      <span className="text-[13px] leading-[1.3] text-muted">
                         {[color, size].filter(Boolean).join(' · ')}
                       </span>
                     )}
-                    <span className="line__price">
+                    <span className="font-medium text-[11px] leading-none tracking-[0.08em] text-muted">
                       {product.discount ? (
-                        <span className="line__price-wrap">
-                          <s>{formatPrice(product.price)}</s>
-                          <strong>{formatPrice(effectivePrice(product))}</strong>
+                        <span className="inline-flex items-baseline gap-[8px]">
+                          <s className="text-muted">{formatPrice(product.price)}</s>
+                          <strong className="font-semibold text-rose">
+                            {formatPrice(effectivePrice(product))}
+                          </strong>
                         </span>
                       ) : (
                         formatPrice(product.price)
                       )}
                     </span>
                   </div>
-                  <div className="line__qty">
+                  <div className="[grid-area:qty] mt-[4px] inline-flex w-fit items-center gap-[14px] rounded-full border border-line px-[12px] py-[6px]">
                     <button
                       type="button"
+                      className="w-[18px] cursor-pointer border-0 bg-transparent text-[15px] leading-none text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-ink focus-visible:outline-offset-[3px]"
                       onClick={() => setQty(key, qty - 1)}
                       aria-label={t('decAria', { name: product.name })}
                     >
                       −
                     </button>
-                    <span aria-live="polite">{qty}</span>
+                    <span className="min-w-[14px] text-center font-semibold text-[13px] leading-none text-ink">
+                      {qty}
+                    </span>
                     <button
                       type="button"
+                      className="w-[18px] cursor-pointer border-0 bg-transparent text-[15px] leading-none text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-ink focus-visible:outline-offset-[3px]"
                       onClick={() => setQty(key, qty + 1)}
                       aria-label={t('incAria', { name: product.name })}
                     >
@@ -119,7 +143,7 @@ export default function CartDrawer({
                   </div>
                   <button
                     type="button"
-                    className="line__remove"
+                    className="col-start-2 mt-[2px] cursor-pointer justify-self-start border-0 bg-transparent p-0 font-medium text-[10px] leading-none tracking-[0.18em] uppercase text-muted underline underline-offset-[3px] hover:text-rose"
                     onClick={() => remove(key)}
                     aria-label={`${t('remove')} ${product.name}`}
                   >
@@ -129,21 +153,23 @@ export default function CartDrawer({
               ))}
             </ul>
 
-            <div className="drawer__foot">
-              <div className="drawer__total">
+            <div className="flex flex-col gap-[16px] border-t border-line px-[30px] pb-[30px] pt-[24px]">
+              <div className="flex items-baseline justify-between font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-muted">
                 <span>{t('subtotal')}</span>
-                <strong>{formatPrice(total)}</strong>
+                <strong className="font-serif text-[28px] tracking-normal normal-case text-ink">
+                  {formatPrice(total)}
+                </strong>
               </div>
               <button
                 type="button"
-                className="drawer__checkout"
+                className="cursor-pointer rounded-[2px] border-0 bg-rose p-[18px] font-medium text-[11px] leading-none tracking-[0.24em] uppercase text-paper transition-opacity duration-200 hover:opacity-85 focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-[4px]"
                 onClick={handleCheckout}
               >
                 {t('checkout')}
               </button>
               <button
                 type="button"
-                className="drawer__clear"
+                className="cursor-pointer border-0 bg-transparent p-0 font-medium text-[10px] leading-none tracking-[0.18em] uppercase text-muted underline underline-offset-[3px] hover:text-ink"
                 onClick={clear}
               >
                 {t('clear')}
