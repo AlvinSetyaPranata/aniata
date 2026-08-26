@@ -23,6 +23,12 @@ function writeStorage(cart) {
   }
 }
 
+function variantKey(id, variant = {}) {
+  const color = variant?.color || ''
+  const size = variant?.size || ''
+  return `${id}::${color}::${size}`
+}
+
 export function useCart(productMap = {}) {
   const [cart, setCart] = useState(readStorage)
 
@@ -31,26 +37,27 @@ export function useCart(productMap = {}) {
   }, [cart])
 
   const add = useCallback(
-    (id, qty = 1) => {
+    (id, qty = 1, variant = {}) => {
       if (!productMap[id]) return
-      setCart((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + qty }))
+      const key = variantKey(id, variant)
+      setCart((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + qty }))
     },
     [productMap],
   )
 
-  const setQty = useCallback((id, qty) => {
+  const setQty = useCallback((key, qty) => {
     setCart((prev) => {
       const next = { ...prev }
-      if (qty <= 0) delete next[id]
-      else next[id] = qty
+      if (qty <= 0) delete next[key]
+      else next[key] = qty
       return next
     })
   }, [])
 
-  const remove = useCallback((id) => {
+  const remove = useCallback((key) => {
     setCart((prev) => {
       const next = { ...prev }
-      delete next[id]
+      delete next[key]
       return next
     })
   }, [])
@@ -58,8 +65,13 @@ export function useCart(productMap = {}) {
   const clear = useCallback(() => setCart({}), [])
 
   const lines = Object.entries(cart)
-    .filter(([id]) => productMap[id])
-    .map(([id, qty]) => ({ product: productMap[id], qty }))
+    .map(([key, qty]) => {
+      const [id, color, size] = key.split('::')
+      const product = productMap[id]
+      if (!product) return null
+      return { key, product, qty, color, size }
+    })
+    .filter(Boolean)
 
   const count = lines.reduce((sum, { qty }) => sum + qty, 0)
   const total = lines.reduce(

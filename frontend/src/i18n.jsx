@@ -48,6 +48,11 @@ const dict = {
     addedToCart: 'Added to cart',
     back: 'Back',
     youMayLike: 'You may also like',
+    selectColor: 'Color',
+    selectSize: 'Size',
+    outOfStock: 'Out of stock',
+    lowStock: 'Only {n} left',
+    inStock: 'In stock',
   },
   id: {
     cart: 'Tas',
@@ -96,6 +101,11 @@ const dict = {
     addedToCart: 'Ditambah ke tas',
     back: 'Kembali',
     youMayLike: 'Mungkin Anda suka',
+    selectColor: 'Warna',
+    selectSize: 'Ukuran',
+    outOfStock: 'Stok habis',
+    lowStock: 'Tersisa {n}',
+    inStock: 'Tersedia',
   },
 }
 

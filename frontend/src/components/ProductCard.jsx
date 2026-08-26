@@ -5,6 +5,13 @@ export default function ProductCard({ product, index, onAdd, onOpen }) {
   const { t } = useLanguage()
   const cover = product.images?.length ? product.images[0] : product.image
   const discounted = product.discount > 0
+  const hasVariants = (product.colors?.length || product.sizes?.length) > 0
+
+  function quickAdd(e) {
+    e.stopPropagation()
+    if (hasVariants) onOpen(product)
+    else onAdd(product.id)
+  }
 
   return (
     <article className="card" style={{ '--tile': product.accent }}>
@@ -34,10 +41,7 @@ export default function ProductCard({ product, index, onAdd, onOpen }) {
             <button
               type="button"
               className="card__add"
-              onClick={(e) => {
-                e.stopPropagation()
-                onAdd(product.id)
-              }}
+              onClick={quickAdd}
             >
               {t('addToBag')}
             </button>

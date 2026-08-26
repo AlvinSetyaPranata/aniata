@@ -1085,6 +1085,98 @@
   outline: 1px solid var(--rose);
   outline-offset: 4px;
 }
+.pd__opts {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 4px;
+}
+.pd__opt-label {
+  display: block;
+  font: 500 11px/1 var(--sans);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.pd__opt-label em {
+  font-style: normal;
+  color: var(--ink);
+}
+.pd__swatches {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pd__swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--swatch);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: transform 0.15s;
+}
+.pd__swatch::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.pd__swatch.is-active::after {
+  border-color: var(--ink);
+}
+.pd__swatch:focus-visible {
+  outline: none;
+}
+.pd__swatch:focus-visible::after {
+  border-color: var(--rose);
+}
+.pd__sizes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pd__size {
+  min-width: 52px;
+  font: 500 12px/1 var(--sans);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+.pd__size.is-active {
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.pd__size:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.pd__size:focus-visible {
+  outline: 1px solid var(--rose);
+  outline-offset: 3px;
+}
+.pd__stock {
+  font: 500 11px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.pd__stock.is-out {
+  color: var(--rose);
+}
 .pd__rec {
   margin-top: clamp(56px, 8vw, 96px);
   border-top: 1px solid var(--line);

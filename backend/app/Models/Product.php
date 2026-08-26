@@ -16,11 +16,17 @@ class Product extends Model
         'image',
         'images',
         'discount',
+        'colors',
+        'sizes',
+        'stock',
     ];
 
     protected $casts = [
         'price' => 'integer',
         'discount' => 'integer',
         'images' => 'array',
+        'colors' => 'array',
+        'sizes' => 'array',
+        'stock' => 'array',
     ];
 }

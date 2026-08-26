@@ -49,8 +49,8 @@ export default function CartDrawer({
         ) : (
           <>
             <ul className="drawer__lines">
-              {lines.map(({ product, qty }) => (
-                <li key={product.id} className="line">
+               {lines.map(({ key, product, qty, color, size }) => (
+                <li key={key} className="line">
                   <img
                     className="line__tile"
                     src={product.image}
@@ -60,6 +60,11 @@ export default function CartDrawer({
                   />
                   <div className="line__info">
                     <span className="line__name">{product.name}</span>
+                    {(color || size) && (
+                      <span className="line__variant">
+                        {[color, size].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
                     <span className="line__price">
                       {product.discount ? (
                         <span className="line__price-wrap">
@@ -74,7 +79,7 @@ export default function CartDrawer({
                   <div className="line__qty">
                     <button
                       type="button"
-                      onClick={() => setQty(product.id, qty - 1)}
+                      onClick={() => setQty(key, qty - 1)}
                       aria-label={t('decAria', { name: product.name })}
                     >
                       −
@@ -82,7 +87,7 @@ export default function CartDrawer({
                     <span aria-live="polite">{qty}</span>
                     <button
                       type="button"
-                      onClick={() => setQty(product.id, qty + 1)}
+                      onClick={() => setQty(key, qty + 1)}
                       aria-label={t('incAria', { name: product.name })}
                     >
                       +
@@ -91,7 +96,7 @@ export default function CartDrawer({
                   <button
                     type="button"
                     className="line__remove"
-                    onClick={() => remove(product.id)}
+                    onClick={() => remove(key)}
                     aria-label={`${t('remove')} ${product.name}`}
                   >
                     {t('remove')}
