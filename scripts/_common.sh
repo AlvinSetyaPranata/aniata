@@ -141,6 +141,8 @@ build_backend() {
   composer install --no-dev --optimize-autoloader --no-interaction
   php artisan migrate --force
   php artisan db:seed --force
+  # Ensure public/storage symlink exists so uploaded product images are served.
+  php artisan storage:link 2>/dev/null || ln -sfn storage/app/public public/storage 2>/dev/null || true
   php artisan config:cache
   php artisan route:cache
   php artisan view:cache

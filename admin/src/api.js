@@ -15,14 +15,20 @@ export class AuthError extends Error {}
 
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { Accept: 'application/json' }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
   const token = getToken()
   if (auth && token) headers['Authorization'] = `Bearer ${token}`
+
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData
+  let finalBody = body
+  if (!isForm && body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+    finalBody = JSON.stringify(body)
+  }
 
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? finalBody : undefined,
   })
 
   if (res.status === 401) {
@@ -45,6 +51,13 @@ export const api = {
   login: (email, password) =>
     request('/admin/login', { method: 'POST', body: { email, password }, auth: false }),
   logout: () => request('/admin/logout', { method: 'POST' }),
+  changePassword: ({ current, password }) =>
+    request('/admin/password', {
+      method: 'POST',
+      body: { current_password: current, password, password_confirmation: password },
+    }),
+  getSettings: () => request('/admin/settings'),
+  updateSettings: (payload) => request('/admin/settings', { method: 'PUT', body: payload }),
   stats: () => request('/admin/stats'),
   listProducts: () => request('/admin/products'),
   createProduct: (payload) => request('/admin/products', { method: 'POST', body: payload }),

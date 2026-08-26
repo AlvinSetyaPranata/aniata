@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\StoreSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -70,5 +72,43 @@ class AdminController extends Controller
             'price_avg' => $products->avg('price'),
             'inventory_value' => $inventoryValue,
         ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Password saat ini salah.'], 422);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json(['message' => 'Password diperbarui.']);
+    }
+
+    public function getSettings()
+    {
+        return StoreSetting::firstOrNew([]);
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $data = $request->validate([
+            'cs_wa' => ['nullable', 'string', 'max:64'],
+            'cashier_wa' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $settings = StoreSetting::firstOrNew([]);
+        $settings->fill($data);
+        $settings->save();
+
+        return response()->json($settings);
     }
 }

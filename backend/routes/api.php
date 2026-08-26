@@ -16,10 +16,15 @@ Route::get('/products', function () {
     return Product::all();
 });
 
+Route::get('/settings', [AdminController::class, 'getSettings']);
+
 Route::post('/admin/login', [AdminController::class, 'login']);
 
 Route::middleware('admin.auth')->group(function () {
     Route::post('/admin/logout', [AdminController::class, 'logout']);
+    Route::post('/admin/password', [AdminController::class, 'updatePassword']);
     Route::get('/admin/stats', [AdminController::class, 'stats']);
+    Route::get('/admin/settings', [AdminController::class, 'getSettings']);
+    Route::put('/admin/settings', [AdminController::class, 'updateSettings']);
     Route::apiResource('admin/products', AdminProductController::class);
 });

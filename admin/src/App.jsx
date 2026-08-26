@@ -3,6 +3,7 @@ import { api, clearToken, getToken, setToken } from './api'
 import Login from './pages/Login'
 import Products from './pages/Products'
 import Dashboard from './pages/Dashboard'
+import Settings from './pages/Settings'
 import Sidebar from './components/Sidebar'
 
 export default function App() {
@@ -50,7 +51,13 @@ export default function App() {
     <div className="flex min-h-screen">
       <Sidebar view={view} setView={setView} onLogout={logout} />
       <main className="flex-1 min-w-0">
-        {view === 'dashboard' ? <Dashboard /> : <Products />}
+        {view === 'settings' ? (
+          <Settings />
+        ) : view === 'dashboard' ? (
+          <Dashboard />
+        ) : (
+          <Products />
+        )}
       </main>
     </div>
   )

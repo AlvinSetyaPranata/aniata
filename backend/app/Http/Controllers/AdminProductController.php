@@ -17,6 +17,7 @@ class AdminProductController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $this->applyFiles($request, $data);
         $data['slug'] = $this->uniqueSlug(
             Arr::get($data, 'slug') ?: $data['name']
         );
@@ -34,6 +35,8 @@ class AdminProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $data = $this->validated($request);
+        $this->applyFiles($request, $data);
+
         if (Arr::has($data, 'slug') && empty($data['slug'])) {
             $data['slug'] = $this->uniqueSlug($data['name'], $product->id);
         }
@@ -50,6 +53,28 @@ class AdminProductController extends Controller
         return response()->json(['message' => 'Deleted'], 200);
     }
 
+    /**
+     * Pull uploaded files into stored /storage paths and drop the raw
+     * UploadedFile entries so they don't get written to the model.
+     */
+    private function applyFiles(Request $request, array &$data): void
+    {
+        if ($request->hasFile('image')) {
+            $data['image'] = '/storage/'.$request->file('image')->store('products', 'public');
+        } else {
+            unset($data['image']);
+        }
+
+        if ($request->hasFile('images')) {
+            $data['images'] = array_map(
+                fn ($file) => '/storage/'.$file->store('products', 'public'),
+                $request->file('images')
+            );
+        } else {
+            unset($data['images']);
+        }
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([
@@ -59,14 +84,17 @@ class AdminProductController extends Controller
             'blurb' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'accent' => ['nullable', 'string', 'max:32'],
-            'image' => ['nullable', 'string'],
-            'images' => ['nullable', 'array'],
-            'images.*' => ['string'],
             'discount' => ['nullable', 'integer', 'min:0', 'max:100'],
             'colors' => ['nullable', 'array'],
+            'colors.*.name' => ['nullable', 'string', 'max:255'],
+            'colors.*.hex' => ['nullable', 'string', 'max:32'],
             'sizes' => ['nullable', 'array'],
-            'sizes.*' => ['string'],
+            'sizes.*' => ['nullable', 'string', 'max:32'],
             'stock' => ['nullable', 'array'],
+            'stock.*' => ['nullable', 'integer', 'min:0'],
+            'image' => ['nullable', 'file', 'image', 'max:5120'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
     }
 
