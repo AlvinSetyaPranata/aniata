@@ -37,11 +37,18 @@ install_nginx_config() {
   # The php-fpm socket name is versioned (/run/php/phpX.Y-fpm.sock); resolve it
   # from the installed PHP version instead of hardcoding 8.3.
   local php_ver sock
-  # Derive the socket path deterministically from the installed PHP version
-  # (/run/php/phpX.Y-fpm.sock). Do NOT depend on the socket file existing yet —
-  # php-fpm is restarted later in the deploy, so the file may be absent here and
-  # a fallback lookup would blank the path and ship a broken config.
-  php_ver=$(ls /etc/php 2>/dev/null | head -n1)
+  # Resolve the php-fpm version. The box can have several PHP versions
+  # installed (/etc/php/8.1, /etc/php/8.3, ...); `ls /etc/php | head -n1` would
+  # pick the wrong (lowest) one and point nginx at a non-existent socket -> 502.
+  # Prefer the version whose php-fpm is actually listening, then the active CLI
+  # php (the one Laravel's artisan uses), then fall back to /etc/php.
+  php_ver=$(sudo ss -xln 2>/dev/null | grep -oP 'php\K[0-9.]+(?=-fpm\.sock)' | head -n1)
+  if [ -z "$php_ver" ]; then
+    php_ver=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null)
+  fi
+  if [ -z "$php_ver" ]; then
+    php_ver=$(ls /etc/php 2>/dev/null | head -n1)
+  fi
   sock="/run/php/php${php_ver}-fpm.sock"
   echo "    php-fpm socket: ${sock:-<unknown>}"
   # The stock default site listens on :80, which is already taken by the
