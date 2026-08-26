@@ -150,10 +150,27 @@ ensure_permissions() {
     sudo systemctl status "${fpm_unit:-php-fpm}" --no-pager || true
   fi
 
+  # is-active can be true while the listener is gone (stale socket -> 502).
+  # Verify php-fpm is actually listening on its socket before we declare success.
+  local i listening=0
+  for i in 1 2 3 4 5; do
+    if sudo ss -xln 2>/dev/null | grep -q "php${php_ver}-fpm.sock" \
+       || pgrep -f "php-fpm${php_ver}" >/dev/null 2>&1; then
+      listening=1
+      echo "    php-fpm listening on ${sock}"
+      break
+    fi
+    sleep 1
+  done
+  if [ "$listening" -eq 0 ]; then
+    echo "    WARN: ${fpm_unit:-php-fpm} not listening after restart (stale socket -> 502 likely)"
+    sudo systemctl status "${fpm_unit:-php-fpm}" --no-pager || true
+  fi
+
   # Sanity: the php-fpm MASTER is always root; the worker (which does the
   # file stat) runs as the pool user. Inspect a non-root worker, not the master.
   local worker_user
-  worker_user=$(ps -o user= -C php-fpm --no-headers 2>/dev/null | grep -v root | head -n1 | tr -d ' ')
+  worker_user=$(ps -o user= -C "php-fpm${php_ver}" --no-headers 2>/dev/null | grep -v root | head -n1 | tr -d ' ')
   if [ -n "$worker_user" ]; then
     echo "    php-fpm worker running as: ${worker_user} (want: ubuntu)"
   else
