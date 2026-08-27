@@ -5,6 +5,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   function submit(e) {
     e.preventDefault()
@@ -35,14 +36,24 @@ export default function Login({ onLogin }) {
         />
 
         <label className="block text-sm font-medium mb-1">Kata Sandi</label>
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-line rounded-lg px-3 py-2 mb-4 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
-          autoComplete="current-password"
-        />
+        <div className="relative mb-4">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border border-line rounded-lg px-3 py-2 pr-11 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
+            autoComplete="current-password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted hover:text-ink"
+            aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+          >
+            {showPassword ? '🙈' : '👁'}
+          </button>
+        </div>
 
         {error && <p className="text-rose text-sm mb-4">{error}</p>}
 

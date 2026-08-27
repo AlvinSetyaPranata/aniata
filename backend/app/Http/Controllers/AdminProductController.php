@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Color;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -18,11 +19,13 @@ class AdminProductController extends Controller
     {
         $data = $this->validated($request);
         $this->applyFiles($request, $data);
+        $this->transformColorImages($data);
         $data['slug'] = $this->uniqueSlug(
             Arr::get($data, 'slug') ?: $data['name']
         );
 
         $product = Product::create($data);
+        $this->syncColors($data);
 
         return response()->json($product, 201);
     }
@@ -36,12 +39,14 @@ class AdminProductController extends Controller
     {
         $data = $this->validated($request);
         $this->applyFiles($request, $data);
+        $this->transformColorImages($data);
 
         if (Arr::has($data, 'slug') && empty($data['slug'])) {
             $data['slug'] = $this->uniqueSlug($data['name'], $product->id);
         }
 
         $product->update($data);
+        $this->syncColors($data);
 
         return response()->json($product);
     }
@@ -57,6 +62,42 @@ class AdminProductController extends Controller
      * Pull uploaded files into stored /storage paths and drop the raw
      * UploadedFile entries so they don't get written to the model.
      */
+    private function syncColors(array $data): void
+    {
+        foreach (($data['colors'] ?? []) as $color) {
+            $name = trim((string) (Arr::get($color, 'name') ?? ''));
+            if ($name !== '') {
+                Color::firstOrCreate(['name' => $name]);
+            }
+        }
+    }
+
+    /**
+     * Resolve each color's images: keep any existing URLs the client wants to
+     * preserve, store any newly uploaded files, and merge them into a single
+     * `images` array. Existing + new URLs end up as `/storage/...` paths.
+     */
+    private function transformColorImages(array &$data): void
+    {
+        if (empty($data['colors'])) {
+            return;
+        }
+
+        foreach ($data['colors'] as &$color) {
+            $existing = Arr::get($color, 'existing_images', []) ?? [];
+            $uploaded = [];
+
+            foreach (Arr::get($color, 'images', []) ?? [] as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $uploaded[] = '/storage/'.$file->store('products', 'public');
+                }
+            }
+
+            $color['images'] = array_merge(array_values($existing), $uploaded);
+            unset($color['existing_images']);
+        }
+    }
+
     private function applyFiles(Request $request, array &$data): void
     {
         if ($request->hasFile('image')) {
@@ -88,6 +129,12 @@ class AdminProductController extends Controller
             'colors' => ['nullable', 'array'],
             'colors.*.name' => ['nullable', 'string', 'max:255'],
             'colors.*.hex' => ['nullable', 'string', 'max:32'],
+            'colors.*.sizes' => ['nullable', 'array'],
+            'colors.*.sizes.*' => ['nullable', 'string', 'max:32'],
+            'colors.*.existing_images' => ['nullable', 'array'],
+            'colors.*.existing_images.*' => ['nullable', 'string'],
+            'colors.*.images' => ['nullable', 'array'],
+            'colors.*.images.*' => ['nullable', 'file', 'image', 'max:5120'],
             'sizes' => ['nullable', 'array'],
             'sizes.*' => ['nullable', 'string', 'max:32'],
             'stock' => ['nullable', 'array'],

@@ -152,7 +152,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                             'relative h-[30px] w-[30px] cursor-pointer rounded-full border border-line p-0 transition-transform duration-[150ms] after:absolute after:inset-[-5px] after:content-[""] after:rounded-full after:border after:border-transparent after:transition-[border-color] after:duration-[150ms] focus-visible:outline-none focus-visible:after:border-rose [&.is-active]:after:border-ink ' +
                             (color === c.name ? 'is-active' : '')
                           }
-                          style={{ background: c.hex }}
+                          style={{ background: c.hex || '#e5e1d8' }}
                           onClick={() => pickColor(c.name)}
                           aria-pressed={color === c.name}
                           aria-label={`${t('selectColor')} ${c.name}`}

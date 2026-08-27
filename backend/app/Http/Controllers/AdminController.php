@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\StoreSetting;
 use App\Models\User;
@@ -62,6 +63,26 @@ class AdminController extends Controller
             $inventoryValue += $product->price * array_sum(array_map('intval', $product->stock ?? []));
         }
 
+        $unitsByProduct = OrderItem::query()
+            ->selectRaw('product_id, SUM(qty) as units')
+            ->groupBy('product_id')
+            ->pluck('units', 'product_id');
+
+        $topCheckedOut = Product::orderBy('name')
+            ->get(['id', 'name'])
+            ->map(function ($product) use ($unitsByProduct) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'units' => (int) ($unitsByProduct[$product->id] ?? 0),
+                ];
+            })
+            ->sortByDesc('units')
+            ->values()
+            ->take(10);
+
+        $totalUnitsCheckedOut = $topCheckedOut->sum('units');
+
         return response()->json([
             'total_products' => $totalProducts,
             'on_sale' => $onSale,
@@ -71,6 +92,8 @@ class AdminController extends Controller
             'price_max' => $products->max('price'),
             'price_avg' => $products->avg('price'),
             'inventory_value' => $inventoryValue,
+            'total_units_checked_out' => $totalUnitsCheckedOut,
+            'top_checked_out' => $topCheckedOut,
         ]);
     }
 

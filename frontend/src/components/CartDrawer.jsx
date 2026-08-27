@@ -27,8 +27,24 @@ export default function CartDrawer({
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  function recordOrder() {
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+    fetch(`${API}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        items: lines.map((l) => ({
+          product_id: l.product.id,
+          qty: l.qty,
+          price: effectivePrice(l.product),
+        })),
+      }),
+    }).catch(() => {})
+  }
+
   function handleCheckout() {
     if (!lines.length) return
+    recordOrder()
     const head = `Halo ${STORE_NAME}, saya ingin memesan:\n`
     const body = lines
       .map((l, i) => {

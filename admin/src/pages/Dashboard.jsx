@@ -40,13 +40,35 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-8 bg-surface border border-line rounded-xl p-5">
-        <h2 className="font-serif text-xl mb-2">Penjualan</h2>
-        <p className="text-muted text-sm leading-relaxed">
-          Pencatatan penjualan belum tersedia. Kasir toko menggunakan WhatsApp untuk
-          checkout, sehingga pesanan tidak disimpan di server — statistik di atas
-          mencakup produk dan nilai inventori, bukan transaksi aktual. Hubungi
-          pengembang jika ingin mengaktifkan pelacakan pesanan.
-        </p>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-serif text-xl">Produk Paling Sering Checkout</h2>
+          <span className="text-muted text-sm">
+            {stats.total_units_checked_out?.toLocaleString('id-ID') ?? 0} unit total
+          </span>
+        </div>
+
+        <ul className="space-y-3">
+          {(stats.top_checked_out ?? []).map((p) => {
+            const max = (stats.top_checked_out ?? [])[0]?.units ?? 0
+            const pct = max > 0 ? Math.max(4, Math.round((p.units / max) * 100)) : 0
+            return (
+              <li key={p.id} className="flex items-center gap-3">
+                <span className="w-40 truncate text-sm text-ink" title={p.name}>
+                  {p.name}
+                </span>
+                <div className="flex-1 h-5 rounded bg-[#f1ede4] overflow-hidden">
+                  <div
+                    className="h-full bg-rose transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="w-12 text-right text-sm font-medium text-ink">
+                  {p.units}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
       </div>
     </div>
   )

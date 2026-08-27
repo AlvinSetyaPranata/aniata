@@ -64,4 +64,7 @@ export const api = {
   updateProduct: (id, payload) =>
     request(`/admin/products/${id}`, { method: 'PUT', body: payload }),
   deleteProduct: (id) => request(`/admin/products/${id}`, { method: 'DELETE' }),
+  listColors: () => request('/admin/colors'),
+  createColor: (name) => request('/admin/colors', { method: 'POST', body: { name } }),
+  deleteColor: (id) => request(`/admin/colors/${id}`, { method: 'DELETE' }),
 }
