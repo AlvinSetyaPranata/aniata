@@ -108,12 +108,15 @@ export default function CartDrawer({
                   key={key}
                   className="grid grid-cols-[56px_1fr] items-center gap-x-[16px] gap-y-[4px] border-b border-line py-[22px] [grid-template-areas:'tile_info'_'tile_qty']"
                 >
-                  <img
-                    className="[grid-area:tile] block h-[72px] w-[56px] border border-line bg-[linear-gradient(160deg,#e9e6df,#dcd8ce)] object-cover"
-                    src={product.image}
-                    alt=""
-                    loading="lazy"
-                  />
+                    <img
+                      className="[grid-area:tile] block h-[72px] w-[56px] border border-line bg-[linear-gradient(160deg,#e9e6df,#dcd8ce)] object-cover"
+                      src={product.image}
+                      alt=""
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.opacity = '0'
+                      }}
+                    />
                   <div className="[grid-area:info] flex flex-col gap-[4px]">
                     <span className="font-serif text-[17px] leading-[1.2] text-ink">
                       {product.name}

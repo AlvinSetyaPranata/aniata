@@ -65,7 +65,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
       <div className="mx-auto max-w-[1200px] animate-pd-rise">
         <button
           type="button"
-          className="mb-[28px] mt-[8px] inline-flex items-center gap-[8px] border-0 bg-transparent p-0 font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-muted cursor-pointer transition-colors duration-[180ms] hover:text-rose focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-[5px]"
+          className="relative z-20 mb-[28px] mt-[8px] inline-flex items-center gap-[8px] border-0 bg-transparent p-0 font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-muted cursor-pointer transition-colors duration-[180ms] hover:text-rose focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-[5px]"
           onClick={onBack}
         >
           <span aria-hidden="true">←</span> {t('back')}
@@ -84,6 +84,9 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                   className="absolute inset-0 block h-full w-full object-cover"
                   src={gallery[active]}
                   alt={product.name}
+                  onError={(e) => {
+                    e.currentTarget.style.opacity = '0'
+                  }}
                 />
               )}
             </div>
@@ -94,13 +97,13 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                     key={i}
                     type="button"
                     className={
-                      'h-[80px] w-[64px] cursor-pointer overflow-hidden border border-line bg-transparent p-0 outline-2 outline-offset-[-2px] outline-transparent transition-[outline-color] duration-[180ms] after:absolute after:inset-[-5px] after:content-[""] after:rounded-full after:border after:border-transparent after:transition-[border-color] after:duration-[150ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose focus-visible:outline-offset-2 [&.is-active]:after:border-ink ' +
+                      'relative h-[80px] w-[64px] cursor-pointer overflow-hidden border border-line bg-transparent p-0 outline-2 outline-offset-[-2px] outline-transparent transition-[outline-color] duration-[180ms] after:absolute after:inset-[-5px] after:content-[""] after:rounded-full after:border after:border-transparent after:transition-[border-color] after:duration-[150ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose focus-visible:outline-offset-2 [&.is-active]:after:border-ink ' +
                       (i === active ? 'is-active' : '')
                     }
                     onClick={() => setActive(i)}
                     aria-label={`${product.name} ${i + 1}`}
                   >
-                    <img className="block h-full w-full object-cover" src={src} alt="" loading="lazy" />
+                     <img className="block h-full w-full object-cover" src={src} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.opacity = '0' }} />
                   </button>
                 ))}
               </div>
