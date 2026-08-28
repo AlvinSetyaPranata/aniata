@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { formatPrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
+import SkeletonImage from './SkeletonImage'
 
 const LINK_COLUMNS = (t) => [
   {
@@ -58,9 +59,10 @@ export default function Footer({ products = [], hideNewIn = false, hideSignup = 
           <div className="grid grid-cols-3 gap-[36px] max-[860px]:grid-cols-2 max-[560px]:grid-cols-1">
             {newIn.map((product) => (
               <article key={product.id} className="group">
-                <div className="aspect-[4/5] overflow-hidden border border-line bg-[linear-gradient(160deg,#e9e6df,#dcd8ce)]">
-                  <img
-                    className="block h-full w-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+                <div className="aspect-[4/5] overflow-hidden border border-line">
+                  <SkeletonImage
+                    className="h-full w-full"
+                    imgClassName="transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
                     src={product.image}
                     alt={product.name}
                     loading="lazy"

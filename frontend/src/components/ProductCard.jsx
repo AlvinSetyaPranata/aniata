@@ -1,5 +1,6 @@
 import { formatPrice, effectivePrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
+import SkeletonImage from './SkeletonImage'
 
 export default function ProductCard({ product, onAdd, onOpen }) {
   const { t } = useLanguage()
@@ -28,14 +29,12 @@ export default function ProductCard({ product, onAdd, onOpen }) {
             −{product.discount}%
           </span>
         )}
-        <img
-          className="absolute inset-0 z-0 block h-full w-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] group-focus-within:scale-[1.04]"
+        <SkeletonImage
+          className="absolute inset-0 z-0"
+          imgClassName="transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] group-focus-within:scale-[1.04]"
           src={cover}
           alt={product.name}
           loading="lazy"
-          onError={(e) => {
-            e.currentTarget.style.opacity = '0'
-          }}
         />
         <div className="absolute inset-x-0 bottom-0 z-[2] flex translate-y-[101%] flex-col gap-[16px] bg-[linear-gradient(to_top,color-mix(in_srgb,var(--color-paper)_94%,transparent),transparent)] p-[22px] transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-focus-within:translate-y-0 max-[720px]:translate-y-0">
           <p className="m-0 font-serif text-[15px] italic leading-[1.5] text-ink">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatPrice, effectivePrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
 import ProductCard from './ProductCard'
+import SkeletonImage from './SkeletonImage'
 
 export default function ProductDetail({ product, products, onBack, onOpen, onAdd }) {
   const { t } = useLanguage()
@@ -80,13 +81,10 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                 </span>
               )}
               {gallery[active] && (
-                <img
-                  className="absolute inset-0 block h-full w-full object-cover"
+                <SkeletonImage
+                  className="absolute inset-0"
                   src={gallery[active]}
                   alt={product.name}
-                  onError={(e) => {
-                    e.currentTarget.style.opacity = '0'
-                  }}
                 />
               )}
             </div>
@@ -103,7 +101,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                     onClick={() => setActive(i)}
                     aria-label={`${product.name} ${i + 1}`}
                   >
-                     <img className="block h-full w-full object-cover" src={src} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.opacity = '0' }} />
+                     <SkeletonImage className="block h-full w-full" src={src} alt="" loading="lazy" />
                   </button>
                 ))}
               </div>

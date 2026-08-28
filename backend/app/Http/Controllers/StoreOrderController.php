@@ -17,6 +17,7 @@ class StoreOrderController extends Controller
         $data = $request->validate([
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:64'],
+            'customer_address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
@@ -32,6 +33,7 @@ class StoreOrderController extends Controller
         $order = Order::create([
             'customer_name' => $data['customer_name'] ?? null,
             'customer_phone' => $data['customer_phone'] ?? null,
+            'customer_address' => $data['customer_address'] ?? null,
             'notes' => $data['notes'] ?? null,
             'total' => $total,
             'status' => 'pending',

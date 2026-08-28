@@ -1,6 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatPrice, effectivePrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
+import { useScrollLock } from '../hooks/useScrollLock'
+import ShippingModal from './ShippingModal'
+import SkeletonImage from './SkeletonImage'
 
 export default function CartDrawer({
   open,
@@ -12,12 +15,20 @@ export default function CartDrawer({
   clear,
 }) {
   const closeRef = useRef(null)
+  const [shipOpen, setShipOpen] = useState(false)
   const { t } = useLanguage()
+
+  useScrollLock(open || shipOpen)
 
   const WA_NUMBER = String(
     import.meta.env.VITE_WHATSAPP_NUMBER ?? '6281234567890',
   ).replace(/\D/g, '')
   const STORE_NAME = import.meta.env.VITE_STORE_NAME ?? 'Aniata'
+
+  function closeAll() {
+    setShipOpen(false)
+    onClose()
+  }
 
   useEffect(() => {
     if (!open) return
@@ -27,12 +38,15 @@ export default function CartDrawer({
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  function recordOrder() {
+  function recordOrder(shipping) {
     const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
     fetch(`${API}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
+        customer_name: shipping?.name ?? null,
+        customer_phone: shipping?.phone ?? null,
+        customer_address: shipping?.address ?? null,
         items: lines.map((l) => ({
           product_id: l.product.id,
           qty: l.qty,
@@ -42,9 +56,7 @@ export default function CartDrawer({
     }).catch(() => {})
   }
 
-  function handleCheckout() {
-    if (!lines.length) return
-    recordOrder()
+  function buildMessage(shipping) {
     const head = `Halo ${STORE_NAME}, saya ingin memesan:\n`
     const body = lines
       .map((l, i) => {
@@ -54,10 +66,24 @@ export default function CartDrawer({
       })
       .join('\n')
     const foot = `\nTotal: ${formatPrice(total)}`
+    const ship = shipping
+      ? `\n\n${t('shipTo')}:\n${shipping.name}\n${shipping.address}\n${shipping.phone}`
+      : ''
+    return head + body + foot + ship
+  }
+
+  function handleCheckout() {
+    if (!lines.length) return
+    setShipOpen(true)
+  }
+
+  function handleShipSubmit(shipping) {
+    recordOrder(shipping)
     const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
-      head + body + foot,
+      buildMessage(shipping),
     )}`
     window.open(url, '_blank', 'noopener')
+    setShipOpen(false)
     clear()
     onClose()
   }
@@ -71,7 +97,7 @@ export default function CartDrawer({
         className={`absolute inset-0 bg-[rgba(21,19,14,0.4)] transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0'
         }`}
-        onClick={onClose}
+        onClick={closeAll}
       />
       <aside
         className={`absolute right-0 top-0 flex h-full w-[min(440px,94vw)] flex-col border-l border-line bg-paper transition-transform duration-[340ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -89,7 +115,7 @@ export default function CartDrawer({
             ref={closeRef}
             type="button"
             className="grid h-[34px] w-[34px] cursor-pointer place-items-center rounded-full border border-line bg-surface text-[13px] text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-ink focus-visible:outline-offset-[4px]"
-            onClick={onClose}
+            onClick={closeAll}
             aria-label={t('closeAria')}
           >
             ✕
@@ -102,20 +128,18 @@ export default function CartDrawer({
           </p>
         ) : (
           <>
-            <ul className="m-0 flex-1 list-none overflow-y-auto px-[30px] py-[4px]">
+            <ul className="m-0 flex-1 list-none overflow-y-auto overscroll-contain px-[30px] py-[4px]">
               {lines.map(({ key, product, qty, color, size }) => (
                 <li
                   key={key}
                   className="grid grid-cols-[56px_1fr] items-center gap-x-[16px] gap-y-[4px] border-b border-line py-[22px] [grid-template-areas:'tile_info'_'tile_qty']"
                 >
-                    <img
-                      className="[grid-area:tile] block h-[72px] w-[56px] border border-line bg-[linear-gradient(160deg,#e9e6df,#dcd8ce)] object-cover"
+                    <SkeletonImage
+                      className="[grid-area:tile] block h-[72px] w-[56px] border border-line"
+                      imgClassName="object-cover"
                       src={product.image}
                       alt=""
                       loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.style.opacity = '0'
-                      }}
                     />
                   <div className="[grid-area:info] flex flex-col gap-[4px]">
                     <span className="font-serif text-[17px] leading-[1.2] text-ink">
@@ -197,6 +221,12 @@ export default function CartDrawer({
           </>
         )}
       </aside>
+
+      <ShippingModal
+        open={shipOpen}
+        onClose={() => setShipOpen(false)}
+        onConfirm={handleShipSubmit}
+      />
     </div>
   )
 }
