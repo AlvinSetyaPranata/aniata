@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { useToast } from '../components/Toast.jsx'
 
 const QUICK_SIZES = ['S', 'M', 'L', 'XL', 'XXL']
 
@@ -376,24 +377,22 @@ const fmtPrice = (n) =>
   'Rp ' + Number(n ?? 0).toLocaleString('id-ID')
 
 export default function Products() {
+  const { toast } = useToast()
   const [items, setItems] = useState(null)
-  const [error, setError] = useState('')
   const [modal, setModal] = useState(null) // null | 'new' | product object
   const [busy, setBusy] = useState(false)
-  const [formError, setFormError] = useState('')
 
   function load() {
     api
       .listProducts()
       .then(setItems)
-      .catch((e) => setError(e.message))
+      .catch((e) => toast(e.message))
   }
 
   useEffect(load, [])
 
   async function submit(payload) {
     setBusy(true)
-    setFormError('')
     try {
       if (modal && modal !== 'new') {
         await api.updateProduct(modal.id, payload)
@@ -403,7 +402,7 @@ export default function Products() {
       setModal(null)
       load()
     } catch (e) {
-      setFormError(e.message)
+      toast(e.message)
     } finally {
       setBusy(false)
     }
@@ -415,7 +414,6 @@ export default function Products() {
     load()
   }
 
-  if (error) return <p className="text-rose p-6">{error}</p>
   if (!items) return <p className="text-muted p-6">Memuat…</p>
 
   return (
@@ -504,7 +502,6 @@ export default function Products() {
           onSubmit={submit}
           onCancel={() => setModal(null)}
           busy={busy}
-          error={formError}
         />
       )}
     </div>

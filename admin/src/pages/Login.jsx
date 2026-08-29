@@ -1,18 +1,18 @@
 import { useState } from 'react'
+import { useToast } from '../components/Toast.jsx'
 
 export default function Login({ onLogin }) {
+  const { toast } = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   function submit(e) {
     e.preventDefault()
-    setError('')
     setBusy(true)
     onLogin(email, password)
-      .catch((err) => setError(err.message || 'Gagal masuk'))
+      .catch((err) => toast(err.message || 'Gagal masuk'))
       .finally(() => setBusy(false))
   }
 
@@ -54,8 +54,6 @@ export default function Login({ onLogin }) {
             {showPassword ? '🙈' : '👁'}
           </button>
         </div>
-
-        {error && <p className="text-rose text-sm mb-4">{error}</p>}
 
         <button
           type="submit"

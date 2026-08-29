@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { useToast } from '../components/Toast.jsx'
 
 const field = 'w-full border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose'
 const label = 'block text-sm font-medium mb-1'
 
 export default function Settings() {
+  const { toast } = useToast()
   const [pw, setPw] = useState({ current: '', password: '', confirm: '' })
-  const [pwMsg, setPwMsg] = useState('')
-  const [pwErr, setPwErr] = useState('')
   const [pwBusy, setPwBusy] = useState(false)
 
   const [cs, setCs] = useState('')
   const [cashier, setCashier] = useState('')
   const [sameAsCs, setSameAsCs] = useState(false)
-  const [waMsg, setWaMsg] = useState('')
-  const [waErr, setWaErr] = useState('')
   const [waBusy, setWaBusy] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
@@ -35,27 +33,23 @@ export default function Settings() {
   function submitPassword(e) {
     e.preventDefault()
     setPwBusy(true)
-    setPwMsg('')
-    setPwErr('')
     api
       .changePassword(pw)
       .then(() => {
-        setPwMsg('Password diperbarui.')
+        toast('Password diperbarui.')
         setPw({ current: '', password: '', confirm: '' })
       })
-      .catch((err) => setPwErr(err.message))
+      .catch((err) => toast(err.message))
       .finally(() => setPwBusy(false))
   }
 
   function submitWa(e) {
     e.preventDefault()
     setWaBusy(true)
-    setWaMsg('')
-    setWaErr('')
     api
       .updateSettings({ cs_wa: cs, cashier_wa: sameAsCs ? cs : cashier })
-      .then(() => setWaMsg('Nomor WhatsApp disimpan.'))
-      .catch((err) => setWaErr(err.message))
+      .then(() => toast('Nomor WhatsApp disimpan.'))
+      .catch((err) => toast(err.message))
       .finally(() => setWaBusy(false))
   }
 
@@ -98,8 +92,6 @@ export default function Settings() {
               minLength={8}
             />
           </div>
-          {pwMsg && <p className="text-green-600 text-sm">{pwMsg}</p>}
-          {pwErr && <p className="text-rose text-sm">{pwErr}</p>}
           <div>
             <button
               type="submit"
@@ -151,8 +143,6 @@ export default function Settings() {
                 placeholder="62812xxxxxx"
               />
             </div>
-            {waMsg && <p className="text-green-600 text-sm">{waMsg}</p>}
-            {waErr && <p className="text-rose text-sm">{waErr}</p>}
             <div>
               <button
                 type="submit"

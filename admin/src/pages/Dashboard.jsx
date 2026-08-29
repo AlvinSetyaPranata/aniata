@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { useToast } from '../components/Toast.jsx'
 
 const fmt = (n) => 'Rp ' + Number(n ?? 0).toLocaleString('id-ID')
 
 export default function Dashboard() {
+  const { toast } = useToast()
   const [stats, setStats] = useState(null)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     api
       .stats()
       .then(setStats)
-      .catch((e) => setError(e.message))
+      .catch((e) => toast(e.message))
   }, [])
 
-  if (error) return <p className="text-rose">{error}</p>
   if (!stats) return <p className="text-muted">Memuat…</p>
 
   const cards = [

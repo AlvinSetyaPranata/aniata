@@ -3,11 +3,14 @@ import { effectivePrice } from '../data/products'
 import { useLanguage } from '../i18n.jsx'
 import ProductCard from './ProductCard'
 
-export default function Search({ products, onClose, onOpen, onAdd }) {
+export default function Search({ products, onClose, onOpen, onAdd, query: extQuery, onSearch: extOnSearch }) {
   const { t } = useLanguage()
-  const [query, setQuery] = useState('')
+  const [intQuery, setIntQuery] = useState('')
   const [sort, setSort] = useState('featured')
   const [onSale, setOnSale] = useState(false)
+
+  const query = extQuery ?? intQuery
+  const setQuery = extOnSearch ?? setIntQuery
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()

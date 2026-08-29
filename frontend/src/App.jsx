@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Header from './components/Header'
+import Loader from './components/Loader'
 import Hero from './components/Hero'
 import ProductCard from './components/ProductCard'
 import ProductDetail from './components/ProductDetail'
@@ -9,6 +10,7 @@ import Search from './components/Search'
 import ProductSkeleton from './components/ProductSkeleton'
 import { useCart } from './hooks/useCart'
 import { useLanguage } from './i18n.jsx'
+import { useToast } from './components/Toast.jsx'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
@@ -17,16 +19,27 @@ export default function App() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const { t } = useLanguage()
+  const { toast } = useToast()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [detail, setDetail] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState('')
 
   const productMap = useMemo(
     () => Object.fromEntries(products.map((p) => [p.id, p])),
     [products],
   )
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return products
+    return products.filter((p) =>
+      `${p.name} ${p.blurb ?? ''} ${p.description ?? ''}`
+        .toLowerCase()
+        .includes(q),
+    )
+  }, [products, query])
   const cart = useCart(productMap)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [detail, setDetail] = useState(null)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [lastAdded, setLastAdded] = useState(null)
 
   useEffect(() => {
     fetch(`${API_URL}/products`)
@@ -41,17 +54,24 @@ export default function App() {
 
   function handleAdd(id, qty = 1) {
     cart.add(id, qty)
-    setLastAdded(id)
-    window.clearTimeout(handleAdd._t)
-    handleAdd._t = window.setTimeout(() => setLastAdded(null), 1600)
+    toast(t('addedToCart'))
   }
 
   return (
     <div className="block min-h-[100svh] bg-paper text-left">
+      <Loader />
+
       <Header
         count={cart.count}
         onOpenCart={() => setDrawerOpen(true)}
-        onOpenSearch={() => setSearchOpen(true)}
+        onOpenSearch={(q) => {
+          if (typeof q === 'string') setQuery(q)
+          setSearchOpen(true)
+        }}
+        onCloseSearch={() => setSearchOpen(false)}
+        searchOpen={searchOpen}
+        query={query}
+        onSearch={setQuery}
       />
 
       {detail ? (
@@ -62,14 +82,16 @@ export default function App() {
           onOpen={setDetail}
           onAdd={handleAdd}
         />
-      ) : searchOpen ? (
-        <Search
-          products={products}
-          onClose={() => setSearchOpen(false)}
-          onOpen={setDetail}
-          onAdd={handleAdd}
-        />
-      ) : (
+        ) : searchOpen ? (
+          <Search
+            products={products}
+            onClose={() => setSearchOpen(false)}
+            onOpen={setDetail}
+            onAdd={handleAdd}
+            query={query}
+            onSearch={setQuery}
+          />
+        ) : (
         <>
           <Hero />
 
@@ -78,6 +100,15 @@ export default function App() {
             id="collection"
             aria-label="Products"
           >
+            {query.trim() && !loading && !error ? (
+              <p className="col-span-full m-0 font-sans text-[11px] uppercase tracking-[0.22em] text-muted">
+                {t('resultsCount', {
+                  n: visible.length,
+                  s: visible.length === 1 ? '' : 's',
+                })}
+              </p>
+            ) : null}
+
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <ProductSkeleton key={i} />
@@ -86,8 +117,12 @@ export default function App() {
               <p className="col-span-full m-0 font-serif text-[16px] italic leading-[1.6] text-muted">
                 {t('loadError', { error })}
               </p>
+            ) : visible.length === 0 ? (
+              <p className="col-span-full m-0 font-serif text-[16px] italic leading-[1.6] text-muted">
+                {t('noResults')}
+              </p>
             ) : (
-              products.map((product) => (
+              visible.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -105,15 +140,6 @@ export default function App() {
         hideNewIn={!!detail || searchOpen}
         hideSignup={!!detail || searchOpen}
       />
-
-      <div
-        className={`fixed bottom-[32px] left-1/2 z-[30] -translate-x-1/2 translate-y-[16px] rounded-full bg-ink px-[22px] py-[14px] font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-paper opacity-0 pointer-events-none transition-[opacity,transform] duration-[250ms] ${
-          lastAdded ? 'translate-y-0 opacity-100' : 'opacity-0'
-        }`}
-        role="status"
-      >
-        {t('addedToCart')}
-      </div>
 
       <CartDrawer
         open={drawerOpen}
