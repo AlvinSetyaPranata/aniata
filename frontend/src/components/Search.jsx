@@ -49,7 +49,7 @@ export default function Search({ products, onClose, onOpen, onAdd, query: extQue
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('searchPlaceholder')}
           aria-label={t('searchAria')}
-          className="mt-[20px] w-full rounded-[2px] border border-line bg-paper px-[16px] py-[16px] font-sans text-[16px] leading-none text-ink placeholder:text-muted focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-2"
+          className="mt-[20px] w-full rounded-[2px] border border-line bg-paper px-[16px] py-[16px] font-sans text-[16px] leading-none text-ink placeholder:text-muted focus-visible:outline focus-visible:outline-1 focus-visible:outline-rose focus-visible:outline-offset-2 min-[721px]:hidden"
         />
 
         <div className="mt-[24px] flex flex-wrap items-center gap-[18px] border-y border-line py-[20px]">
