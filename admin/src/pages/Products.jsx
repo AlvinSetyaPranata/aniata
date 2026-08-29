@@ -381,6 +381,7 @@ export default function Products() {
   const [items, setItems] = useState(null)
   const [modal, setModal] = useState(null) // null | 'new' | product object
   const [busy, setBusy] = useState(false)
+  const [formError, setFormError] = useState('')
 
   function load() {
     api
@@ -393,6 +394,7 @@ export default function Products() {
 
   async function submit(payload) {
     setBusy(true)
+    setFormError('')
     try {
       if (modal && modal !== 'new') {
         await api.updateProduct(modal.id, payload)
@@ -440,8 +442,8 @@ export default function Products() {
           </p>
         </div>
       ) : (
-        <div className="border border-line rounded-xl overflow-hidden bg-surface">
-          <table className="w-full text-sm">
+        <div className="border border-line rounded-xl overflow-hidden bg-surface overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-[#f1ede4] text-muted">
               <tr>
                 <th className="text-left font-medium px-4 py-3">Gambar</th>
@@ -502,6 +504,7 @@ export default function Products() {
           onSubmit={submit}
           onCancel={() => setModal(null)}
           busy={busy}
+          error={formError}
         />
       )}
     </div>

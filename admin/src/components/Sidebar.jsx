@@ -44,14 +44,37 @@ const ITEMS = [
   { key: 'settings', label: 'Pengaturan', Icon: IconSettings },
 ]
 
-export default function Sidebar({ view, setView, onLogout }) {
+function IconClose() {
   return (
-    <aside className="w-64 shrink-0 bg-surface border-r border-line flex flex-col min-h-screen">
-      <div className="px-5 py-4 border-b border-line">
-        <div className="font-serif text-lg leading-none">Aniata</div>
-        <div className="text-muted text-[10px] tracking-[0.18em] uppercase mt-1">
-          Admin
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
+export default function Sidebar({ view, setView, onLogout, open, onClose }) {
+  return (
+    <aside
+      className={
+        'fixed inset-y-0 left-0 z-40 w-64 shrink-0 bg-surface border-r border-line flex flex-col min-h-screen transform transition-transform duration-200 ease-out lg:static lg:translate-x-0 lg:z-auto ' +
+        (open ? 'translate-x-0' : '-translate-x-full')
+      }
+    >
+      <div className="flex items-center justify-between px-5 py-4 border-b border-line">
+        <div>
+          <div className="font-serif text-lg leading-none">Aniata</div>
+          <div className="text-muted text-[10px] tracking-[0.18em] uppercase mt-1">
+            Admin
+          </div>
         </div>
+        <button
+          onClick={onClose}
+          aria-label="Tutup menu"
+          className="lg:hidden -mr-1 p-1.5 rounded-lg text-muted hover:bg-paper hover:text-ink transition-colors"
+        >
+          <IconClose />
+        </button>
       </div>
 
       <nav className="flex-1 px-3 py-5 flex flex-col gap-1">
