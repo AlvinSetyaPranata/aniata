@@ -40,7 +40,7 @@ export default function CartDrawer({
 
   function recordOrder(shipping) {
     const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
-    fetch(`${API}/orders`, {
+    return fetch(`${API}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
@@ -51,6 +51,8 @@ export default function CartDrawer({
           product_id: l.product.id,
           qty: l.qty,
           price: effectivePrice(l.product),
+          color: l.color ?? null,
+          size: l.size ?? null,
         })),
       }),
     }).catch(() => {})
@@ -95,7 +97,7 @@ export default function CartDrawer({
   }
 
   async function handleShipSubmit(shipping) {
-    recordOrder(shipping)
+    await recordOrder(shipping)
     const number = await resolveWaNumber()
     const url = `https://wa.me/${number}?text=${encodeURIComponent(
       buildMessage(shipping),

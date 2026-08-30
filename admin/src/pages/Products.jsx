@@ -276,8 +276,10 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
           <div className="flex flex-col gap-3">
             {form.colors.map((c, i) => (
               <div key={i} className="flex items-start gap-3 border border-line rounded-lg p-3">
-                <label className="relative h-16 w-16 shrink-0 cursor-pointer grid place-items-center rounded border border-line bg-[#f1ede4] text-2xl text-muted hover:opacity-90">
-                  +
+                <div
+                  className="relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded border border-line bg-[#f1ede4] hover:opacity-90"
+                  onClick={(e) => e.currentTarget.querySelector('input[type=file]')?.click()}
+                >
                   <input
                     type="file"
                     accept="image/*"
@@ -285,7 +287,45 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
                     className="hidden"
                     onChange={addVariantImages(i)}
                   />
-                </label>
+                  {c.gallery.length === 0 ? (
+                    <span className="grid h-full w-full place-items-center text-2xl text-muted">
+                      +
+                    </span>
+                  ) : (
+                    <span
+                      className={
+                        'grid h-full w-full gap-px ' +
+                        (c.gallery.length === 1 ? 'grid-cols-1' : 'grid-cols-2')
+                      }
+                    >
+                      {c.gallery.slice(0, 4).map((g, gi) => (
+                        <span key={gi} className="relative">
+                          <img
+                            src={g.url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeVariantImage(i, gi)
+                            }}
+                            className="absolute right-[2px] top-[2px] z-10 grid h-[14px] w-[14px] cursor-pointer place-items-center rounded-full bg-rose text-[9px] leading-none text-paper"
+                            aria-label="Hapus gambar"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                  {c.gallery.length > 4 && (
+                    <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] bg-black/45 px-1 py-[2px] text-center text-[10px] font-medium text-paper">
+                      +{c.gallery.length - 4}
+                    </span>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <input
                     className={field}
@@ -335,25 +375,6 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
                         </span>
                       ))}
                     </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {c.gallery.map((g, gi) => (
-                      <div key={gi} className="relative">
-                        <img
-                          src={g.url}
-                          alt=""
-                          className="h-14 w-14 rounded border border-line object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeVariantImage(i, gi)}
-                          className="absolute -top-2 -right-2 bg-rose text-paper rounded-full w-5 h-5 text-xs"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
                   </div>
                 </div>
                 <button type="button" onClick={() => removeColor(i)} className="text-rose px-2 mt-1">

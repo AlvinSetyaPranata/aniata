@@ -206,6 +206,95 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                         : t('inStock')
                       : ''}
                 </p>
+                {product.stock && (
+                  <p className="m-0 font-medium text-[11px] leading-none tracking-[0.12em] uppercase text-muted">
+                    {t('totalStock', {
+                      n: Object.values(product.stock).reduce(
+                        (sum, n) => sum + (Number(n) || 0),
+                        0,
+                      ),
+                    })}
+                  </p>
+                )}
+
+                {product.stock && (colors.length || sizes.length) && (
+                  <div>
+                    <span className="mb-[12px] block font-medium text-[11px] leading-none tracking-[0.22em] uppercase text-muted">
+                      {t('stockMatrix')}
+                    </span>
+                    <div className="overflow-x-auto rounded-[2px] border border-line">
+                      <table className="w-full text-left text-[12px] leading-none">
+                        <thead>
+                          <tr className="border-b border-line">
+                            <th className="px-[12px] py-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+                              {t('selectColor')}
+                            </th>
+                            {sizes.map((s) => (
+                              <th
+                                key={s}
+                                className="px-[12px] py-[10px] text-center font-medium text-muted"
+                              >
+                                {s}
+                              </th>
+                            ))}
+                            <th className="px-[12px] py-[10px] text-right font-medium text-muted">
+                              {t('total')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {colors.map((c) => (
+                              <tr key={c.name} className="border-b border-line last:border-0">
+                                <td className="px-[12px] py-[10px] font-medium text-ink">
+                                  {c.name}
+                                </td>
+                                {sizes.map((s) => {
+                                  const v = stockOf(c.name, s)
+                                  return (
+                                    <td
+                                      key={s}
+                                      className={
+                                        'px-[12px] py-[10px] text-center text-ink ' +
+                                        (v === 0
+                                          ? 'font-medium text-[12px] text-muted/50'
+                                          : 'font-medium')
+                                      }
+                                    >
+                                      {v}
+                                    </td>
+                                  )
+                                })}
+                                <td className="px-[12px] py-[10px] text-right font-semibold text-ink">
+                                  {sizes.reduce((sum, s) => sum + stockOf(c.name, s), 0)}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-line bg-surface/50">
+                            <td className="px-[12px] py-[10px] font-semibold text-ink">
+                              {t('total')}
+                            </td>
+                            {sizes.map((s) => (
+                              <td
+                                key={s}
+                                className="px-[12px] py-[10px] text-center font-semibold text-ink"
+                              >
+                                {colors.reduce((sum, c) => sum + stockOf(c.name, s), 0)}
+                              </td>
+                            ))}
+                            <td className="px-[12px] py-[10px] text-right font-semibold text-ink">
+                              {Object.values(product.stock).reduce(
+                                (sum, n) => sum + (Number(n) || 0),
+                                0,
+                              )}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
