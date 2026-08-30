@@ -134,22 +134,52 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"${DB_USERN
 
 # Raise PHP upload limits so large product-image uploads (single image + gallery)
 # aren't silently dropped by PHP after nginx accepts them. The server-level
-# nginx client_max_body_size is 64M; keep PHP at/above that. Applied to every
-# installed PHP version's fpm + cli php.ini (no-op if a key is already larger).
+# nginx client_max_body_size is 100M; keep PHP at/above that. Applied to every
+# installed PHP version's fpm + cli php.ini AND the fpm pool www.conf (a
+# php_admin_value in the pool overrides php.ini, so we set both to be
+# authoritative). The pool change requires a php-fpm restart to take effect.
 tune_php_upload_limits() {
   echo "==> Tuning PHP upload_max_filesize / post_max_size"
   for ini in /etc/php/*/fpm/php.ini /etc/php/*/cli/php.ini; do
     [ -f "$ini" ] || continue
     echo "    patching ${ini}"
     # Only raise; never lower an existing larger value.
-    sudo sed -i -E 's/^[[:space:]]*upload_max_filesize[[:space:]]*=.*/upload_max_filesize = 64M/' "$ini"
-    sudo sed -i -E 's/^[[:space:]]*post_max_size[[:space:]]*=.*/post_max_size = 64M/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*upload_max_filesize[[:space:]]*=.*/upload_max_filesize = 100M/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*post_max_size[[:space:]]*=.*/post_max_size = 100M/' "$ini"
     # If the directive was absent, append it.
     grep -qE '^[[:space:]]*upload_max_filesize[[:space:]]*=' "$ini" \
-      || echo 'upload_max_filesize = 64M' | sudo tee -a "$ini" >/dev/null
+      || echo 'upload_max_filesize = 100M' | sudo tee -a "$ini" >/dev/null
     grep -qE '^[[:space:]]*post_max_size[[:space:]]*=' "$ini" \
-      || echo 'post_max_size = 64M' | sudo tee -a "$ini" >/dev/null
+      || echo 'post_max_size = 100M' | sudo tee -a "$ini" >/dev/null
   done
+
+  # The fpm pool can pin these via php_admin_value (overrides php.ini). Set them
+  # authoritatively in every pool we find.
+  local pool
+  for pool in /etc/php/*/fpm/pool.d/www.conf; do
+    [ -f "$pool" ] || continue
+    echo "    patching pool ${pool}"
+    if grep -qE '^[[:space:]]*php_admin_value\[upload_max_filesize\]' "$pool"; then
+      sudo sed -i -E 's/^[[:space:]]*php_admin_value\[upload_max_filesize\][[:space:]]*=.*/php_admin_value[upload_max_filesize] = 100M/' "$pool"
+    else
+      echo 'php_admin_value[upload_max_filesize] = 100M' | sudo tee -a "$pool" >/dev/null
+    fi
+    if grep -qE '^[[:space:]]*php_admin_value\[post_max_size\]' "$pool"; then
+      sudo sed -i -E 's/^[[:space:]]*php_admin_value\[post_max_size\][[:space:]]*=.*/php_admin_value[post_max_size] = 100M/' "$pool"
+    else
+      echo 'php_admin_value[post_max_size] = 100M' | sudo tee -a "$pool" >/dev/null
+    fi
+  done
+
+  # Apply the new pool limits immediately (reload_web also restarts php-fpm
+  # later, but doing it here guarantees the ini/pool changes are live even if
+  # the restart in reload_web is skipped).
+  local fpm_unit
+  fpm_unit=$(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null \
+    | awk '{print $1}' | grep -E '^php[0-9.]*-fpm\.service$' | head -n1)
+  if [ -n "$fpm_unit" ]; then
+    sudo systemctl restart "$fpm_unit" 2>&1 || true
+  fi
 }
 
 # Production deps + migrations + framework caches.

@@ -135,14 +135,14 @@ class AdminProductController extends Controller
             'colors.*.existing_images' => ['nullable', 'array'],
             'colors.*.existing_images.*' => ['nullable', 'string'],
             'colors.*.images' => ['nullable', 'array'],
-            'colors.*.images.*' => ['nullable', 'file', 'image', 'max:5120'],
+            'colors.*.images.*' => ['nullable', 'file', 'image', 'max:25600'],
             'sizes' => ['nullable', 'array'],
             'sizes.*' => ['nullable', 'string', 'max:32'],
             'stock' => ['nullable', 'array'],
             'stock.*' => ['nullable', 'integer', 'min:0'],
-            'image' => ['nullable', 'file', 'image', 'max:5120'],
+            'image' => ['nullable', 'file', 'image', 'max:25600'],
             'images' => ['nullable', 'array'],
-            'images.*' => ['nullable', 'file', 'image', 'max:5120'],
+            'images.*' => ['nullable', 'file', 'image', 'max:25600'],
         ]);
 
         $hasNew = $request->hasFile('image')
