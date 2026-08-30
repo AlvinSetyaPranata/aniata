@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Color;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -17,7 +18,7 @@ class AdminProductController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, null);
         $this->applyFiles($request, $data);
         $this->transformColorImages($data);
         $data['slug'] = $this->uniqueSlug(
@@ -37,7 +38,7 @@ class AdminProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $product);
         $this->applyFiles($request, $data);
         $this->transformColorImages($data);
 
@@ -116,9 +117,9 @@ class AdminProductController extends Controller
         }
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Product $product = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'integer', 'min:0'],
@@ -143,6 +144,40 @@ class AdminProductController extends Controller
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
+
+        $hasNew = $request->hasFile('image')
+            || collect($request->file('images') ?? [])->filter()->isNotEmpty()
+            || collect($request->file('colors') ?? [])->flatten()->filter()->isNotEmpty();
+
+        $kept = $product && $this->productHasImage($product);
+
+        if (! $hasNew && ! $kept) {
+            throw ValidationException::withMessages([
+                'image' => 'Setiap produk harus memiliki minimal 1 gambar.',
+            ]);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Whether the stored product already carries at least one image, across the
+     * main image, the gallery, or any color variant gallery.
+     */
+    private function productHasImage(Product $product): bool
+    {
+        if ($product->image) {
+            return true;
+        }
+        if (! empty($product->images)) {
+            return true;
+        }
+        foreach (($product->colors ?? []) as $color) {
+            if (! empty($color['images'])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function uniqueSlug(string $source, ?int $ignoreId = null): string

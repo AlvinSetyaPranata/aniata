@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import { useToast } from '../components/Toast.jsx'
+
+
 
 const QUICK_SIZES = ['S', 'M', 'L', 'XL', 'XXL']
 
@@ -44,6 +46,7 @@ function toPayload(form) {
 }
 
 export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
+  const { toast } = useToast()
   const [form, setForm] = useState(() => {
     const colors = (initial?.colors ?? []).map((c) => ({
       name: c.name ?? '',
@@ -81,13 +84,14 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
   const removeSuggestion = async (id) => {
     try {
       await api.deleteColor(id)
-    } catch {
-      /* ignore */
+    } catch (e) {
+      toast(e.message)
+      return
     }
     setSuggestions((s) => s.filter((c) => c.id !== id))
   }
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.checked ?? e.target.value }))
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const setColorName = (i) => (e) =>
     setForm((f) => ({
       ...f,
@@ -383,6 +387,47 @@ export default function Products() {
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
 
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [sort, setSort] = useState('newest')
+
+  const visible = useMemo(() => {
+    if (!Array.isArray(items)) return []
+    const q = query.trim().toLowerCase()
+    let list = items.filter((p) => {
+      if (q && !p.name.toLowerCase().includes(q)) return false
+      if (filter === 'sale' && !(p.discount > 0)) return false
+      if (filter === 'no-sale' && p.discount > 0) return false
+      return true
+    })
+
+    const dir = (key, numeric = true) =>
+      [...list].sort((a, b) => {
+        if (numeric) {
+          return Number(a[key] ?? 0) - Number(b[key] ?? 0)
+        }
+        return String(a[key] ?? '')
+          .toLowerCase()
+          .localeCompare(String(b[key] ?? '').toLowerCase(), 'id')
+      })
+
+    switch (sort) {
+      case 'name-asc':
+        return dir('name', false)
+      case 'name-desc':
+        return dir('name', false).reverse()
+      case 'price-asc':
+        return dir('price')
+      case 'price-desc':
+        return dir('price').reverse()
+      case 'discount-desc':
+        return dir('discount').reverse()
+      case 'newest':
+      default:
+        return [...list].sort((a, b) => b.id - a.id)
+    }
+  }, [items, query, filter, sort])
+
   function load() {
     api
       .listProducts()
@@ -395,11 +440,14 @@ export default function Products() {
   async function submit(payload) {
     setBusy(true)
     setFormError('')
+    const editing = modal && modal !== 'new'
     try {
-      if (modal && modal !== 'new') {
+      if (editing) {
         await api.updateProduct(modal.id, payload)
+        toast('Produk diperbarui.')
       } else {
         await api.createProduct(payload)
+        toast('Produk ditambahkan.')
       }
       setModal(null)
       load()
@@ -412,8 +460,13 @@ export default function Products() {
 
   async function remove(p) {
     if (!window.confirm(`Hapus produk "${p.name}"?`)) return
-    await api.deleteProduct(p.id)
-    load()
+    try {
+      await api.deleteProduct(p.id)
+      toast(`Produk “${p.name}” dihapus.`)
+      load()
+    } catch (e) {
+      toast(e.message)
+    }
   }
 
   if (!items) return <p className="text-muted p-6">Memuat…</p>
@@ -442,19 +495,58 @@ export default function Products() {
           </p>
         </div>
       ) : (
-        <div className="border border-line rounded-xl overflow-hidden bg-surface overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-[#f1ede4] text-muted">
-              <tr>
-                <th className="text-left font-medium px-4 py-3">Gambar</th>
-                <th className="text-left font-medium px-4 py-3">Nama</th>
-                <th className="text-left font-medium px-4 py-3">Harga</th>
-                <th className="text-left font-medium px-4 py-3">Diskon</th>
-                <th className="text-right font-medium px-4 py-3">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((p) => (
+        <>
+          <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari nama produk…"
+              className="w-full md:flex-1 border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
+            />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
+            >
+              <option value="all">Semua produk</option>
+              <option value="sale">Sedang diskon</option>
+              <option value="no-sale">Tanpa diskon</option>
+            </select>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
+            >
+              <option value="newest">Terbaru</option>
+              <option value="name-asc">Nama A→Z</option>
+              <option value="name-desc">Nama Z→A</option>
+              <option value="price-asc">Harga terendah</option>
+              <option value="price-desc">Harga tertinggi</option>
+              <option value="discount-desc">Diskon terbesar</option>
+            </select>
+          </div>
+
+          {visible.length === 0 ? (
+            <div className="border border-line rounded-xl bg-surface p-10 text-center">
+              <p className="text-muted">
+                Tidak ada produk yang cocok dengan pencarian.
+              </p>
+            </div>
+          ) : (
+            <div className="border border-line rounded-xl overflow-hidden bg-surface overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead className="bg-[#f1ede4] text-muted">
+                  <tr>
+                    <th className="text-left font-medium px-4 py-3">Gambar</th>
+                    <th className="text-left font-medium px-4 py-3">Nama</th>
+                    <th className="text-left font-medium px-4 py-3">Harga</th>
+                    <th className="text-left font-medium px-4 py-3">Diskon</th>
+                    <th className="text-right font-medium px-4 py-3">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((p) => (
                 <tr key={p.id} className="border-t border-line">
                   <td className="px-4 py-3">
                     {p.image ? (
@@ -464,7 +556,25 @@ export default function Products() {
                         className="h-12 w-10 rounded border border-line object-cover"
                       />
                     ) : (
-                      <span className="text-muted">—</span>
+                      <span
+                        className="inline-flex items-center justify-center text-muted"
+                        title="Belum ada gambar"
+                        aria-label="Belum ada gambar"
+                      >
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="9" />
+                          <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
+                        </svg>
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-ink">{p.name}</td>
@@ -496,6 +606,9 @@ export default function Products() {
             </tbody>
           </table>
         </div>
+          )
+          }
+        </>
       )}
 
       {modal && (

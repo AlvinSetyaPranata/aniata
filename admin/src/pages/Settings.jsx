@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useToast } from '../components/Toast.jsx'
 
+
+
 const field = 'w-full border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose'
 const label = 'block text-sm font-medium mb-1'
 
@@ -26,7 +28,7 @@ export default function Settings() {
         setCashier(k)
         setSameAsCs(k !== '' && k === c)
       })
-      .catch(() => {})
+      .catch((e) => toast(e.message || 'Gagal memuat pengaturan.'))
       .finally(() => setLoaded(true))
   }, [])
 
