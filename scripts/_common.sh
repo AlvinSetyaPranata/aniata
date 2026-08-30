@@ -134,12 +134,14 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"${DB_USERN
 
 # Raise PHP upload limits so large product-image uploads (single image + gallery)
 # aren't silently dropped by PHP after nginx accepts them. The server-level
-# nginx client_max_body_size is 100M; keep PHP at/above that. Applied to every
-# installed PHP version's fpm + cli php.ini AND the fpm pool www.conf (a
-# php_admin_value in the pool overrides php.ini, so we set both to be
-# authoritative). The pool change requires a php-fpm restart to take effect.
-tune_php_upload_limits() {
-  echo "==> Tuning PHP upload_max_filesize / post_max_size"
+# Tune PHP for production on the VPS: raise upload limits (so product-image
+# uploads aren't dropped by PHP) and enable OPcache (so Laravel isn't recompiled
+# on every request — the usual cause of a slow API response on a small box).
+# Applied to every installed PHP version's fpm + cli php.ini AND the fpm pool
+# www.conf (a php_admin_value in the pool overrides php.ini, so we set both to
+# be authoritative). The pool change requires a php-fpm restart to take effect.
+tune_php() {
+  echo "==> Tuning PHP upload_max_filesize / post_max_size / opcache"
   for ini in /etc/php/*/fpm/php.ini /etc/php/*/cli/php.ini; do
     [ -f "$ini" ] || continue
     echo "    patching ${ini}"
@@ -151,6 +153,30 @@ tune_php_upload_limits() {
       || echo 'upload_max_filesize = 100M' | sudo tee -a "$ini" >/dev/null
     grep -qE '^[[:space:]]*post_max_size[[:space:]]*=' "$ini" \
       || echo 'post_max_size = 100M' | sudo tee -a "$ini" >/dev/null
+
+    # OPcache — enable and warm the whole framework so requests don't recompile.
+    sudo sed -i -E 's/^[[:space:]]*opcache\.enable[[:space:]]*=.*/opcache.enable = 1/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.enable_cli[[:space:]]*=.*/opcache.enable_cli = 1/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.memory_consumption[[:space:]]*=.*/opcache.memory_consumption = 256/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.interned_strings_buffer[[:space:]]*=.*/opcache.interned_strings_buffer = 16/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.max_accelerated_files[[:space:]]*=.*/opcache.max_accelerated_files = 20000/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.validate_timestamps[[:space:]]*=.*/opcache.validate_timestamps = 0/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.revalidate_freq[[:space:]]*=.*/opcache.revalidate_freq = 0/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*opcache\.save_comments[[:space:]]*=.*/opcache.save_comments = 1/' "$ini"
+    # Append any OPcache directives that were entirely absent from the ini.
+    grep -qE '^[[:space:]]*opcache\.enable[[:space:]]*=' "$ini" \
+      || cat <<'EOF' | sudo tee -a "$ini" >/dev/null
+
+; OPcache (enabled by Aniata deploy)
+opcache.enable = 1
+opcache.enable_cli = 1
+opcache.memory_consumption = 256
+opcache.interned_strings_buffer = 16
+opcache.max_accelerated_files = 20000
+opcache.validate_timestamps = 0
+opcache.revalidate_freq = 0
+opcache.save_comments = 1
+EOF
   done
 
   # The fpm pool can pin these via php_admin_value (overrides php.ini). Set them
@@ -196,7 +222,8 @@ build_backend() {
   php artisan config:cache
   php artisan route:cache
   php artisan view:cache
-  tune_php_upload_limits
+  php artisan optimize 2>/dev/null || true
+  tune_php
 }
 
 # Align nginx + php-fpm to the deploy user so they can read/write the app
