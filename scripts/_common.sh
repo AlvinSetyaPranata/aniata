@@ -132,6 +132,26 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"${DB_USERN
     || echo "WARN: could not apply DB grants automatically; apply them manually"
 }
 
+# Raise PHP upload limits so large product-image uploads (single image + gallery)
+# aren't silently dropped by PHP after nginx accepts them. The server-level
+# nginx client_max_body_size is 64M; keep PHP at/above that. Applied to every
+# installed PHP version's fpm + cli php.ini (no-op if a key is already larger).
+tune_php_upload_limits() {
+  echo "==> Tuning PHP upload_max_filesize / post_max_size"
+  for ini in /etc/php/*/fpm/php.ini /etc/php/*/cli/php.ini; do
+    [ -f "$ini" ] || continue
+    echo "    patching ${ini}"
+    # Only raise; never lower an existing larger value.
+    sudo sed -i -E 's/^[[:space:]]*upload_max_filesize[[:space:]]*=.*/upload_max_filesize = 64M/' "$ini"
+    sudo sed -i -E 's/^[[:space:]]*post_max_size[[:space:]]*=.*/post_max_size = 64M/' "$ini"
+    # If the directive was absent, append it.
+    grep -qE '^[[:space:]]*upload_max_filesize[[:space:]]*=' "$ini" \
+      || echo 'upload_max_filesize = 64M' | sudo tee -a "$ini" >/dev/null
+    grep -qE '^[[:space:]]*post_max_size[[:space:]]*=' "$ini" \
+      || echo 'post_max_size = 64M' | sudo tee -a "$ini" >/dev/null
+  done
+}
+
 # Production deps + migrations + framework caches.
 build_backend() {
   echo "==> Building backend"
@@ -146,6 +166,7 @@ build_backend() {
   php artisan config:cache
   php artisan route:cache
   php artisan view:cache
+  tune_php_upload_limits
 }
 
 # Align nginx + php-fpm to the deploy user so they can read/write the app
