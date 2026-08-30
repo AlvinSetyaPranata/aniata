@@ -178,6 +178,24 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
   const label = 'block text-sm font-medium mb-1'
   const showStock = form.editing && form.colors.some((c) => (c.sizes ?? []).length > 0)
 
+  const fmtInput = (v) => {
+    const raw = String(v ?? '').replace(/[^\d]/g, '')
+    if (raw === '') return ''
+    return 'Rp ' + Number(raw).toLocaleString('id-ID')
+  }
+  const onPrice = (e) => {
+    const el = e.target
+    const raw = el.value.replace(/\D/g, '')
+    setForm((f) => ({ ...f, price: raw }))
+    // Restore caret after the formatted value re-renders.
+    requestAnimationFrame(() => {
+      const caret = el.value.length
+      el.setSelectionRange(caret, caret)
+    })
+  }
+  const onDiscount = (e) =>
+    setForm((f) => ({ ...f, discount: e.target.value.replace(/[^\d]/g, '') }))
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto p-4">
       <form onSubmit={submit} className="my-8 w-full max-w-2xl bg-surface border border-line rounded-xl p-6 shadow-lg">
@@ -190,11 +208,29 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
           </div>
           <div>
             <label className={label}>Harga (IDR) *</label>
-            <input type="number" className={field} value={form.price} onChange={set('price')} required min="0" />
+            <input
+              type="text"
+              inputMode="numeric"
+              className={field}
+              value={fmtInput(form.price)}
+              onChange={onPrice}
+              required
+              placeholder="0"
+            />
           </div>
           <div>
-            <label className={label}>Diskon %</label>
-            <input type="number" className={field} value={form.discount} onChange={set('discount')} min="0" max="100" />
+            <label className={label}>Diskon ( ditulis tanpa simbol % )</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted select-none pointer-events-none">%</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                className="w-full border border-line rounded-lg pl-7 pr-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
+                value={form.discount}
+                onChange={onDiscount}
+                placeholder="0"
+              />
+            </div>
           </div>
           <div className="col-span-2">
             <label className={label}>Deskripsi</label>

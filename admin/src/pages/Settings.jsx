@@ -15,6 +15,8 @@ export default function Settings() {
   const [cs, setCs] = useState('')
   const [cashier, setCashier] = useState('')
   const [sameAsCs, setSameAsCs] = useState(false)
+  const [csLocked, setCsLocked] = useState(true)
+  const [cashierLocked, setCashierLocked] = useState(true)
   const [waBusy, setWaBusy] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
@@ -27,6 +29,8 @@ export default function Settings() {
         setCs(c)
         setCashier(k)
         setSameAsCs(k !== '' && k === c)
+        setCsLocked(c !== '')
+        setCashierLocked(k !== '')
       })
       .catch((e) => toast(e.message || 'Gagal memuat pengaturan.'))
       .finally(() => setLoaded(true))
@@ -50,7 +54,11 @@ export default function Settings() {
     setWaBusy(true)
     api
       .updateSettings({ cs_wa: cs, cashier_wa: sameAsCs ? cs : cashier })
-      .then(() => toast('Nomor WhatsApp disimpan.'))
+      .then(() => {
+        toast('Nomor WhatsApp disimpan.')
+        setCsLocked(cs !== '')
+        setCashierLocked(sameAsCs ? cs !== '' : cashier !== '')
+      })
       .catch((err) => toast(err.message))
       .finally(() => setWaBusy(false))
   }
@@ -113,16 +121,40 @@ export default function Settings() {
         ) : (
           <form onSubmit={submitWa} className="grid grid-cols-1 gap-4">
             <div>
-              <label className={label}>Customer Service</label>
-              <input
-                className={field}
-                value={cs}
-                onChange={(e) => {
-                  setCs(e.target.value)
-                  if (sameAsCs) setCashier(e.target.value)
-                }}
-                placeholder="62812xxxxxx"
-              />
+              <div className="flex items-center justify-between">
+                <label className={label}>Customer Service</label>
+                {cs !== '' && !csLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setCsLocked(true)}
+                    className="text-xs text-rose hover:underline"
+                  >
+                    Sembunyikan
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  className={field}
+                  value={cs}
+                  onChange={(e) => {
+                    setCs(e.target.value)
+                    if (sameAsCs) setCashier(e.target.value)
+                  }}
+                  placeholder="62812xxxxxx"
+                  readOnly={csLocked}
+                  disabled={csLocked}
+                />
+                {csLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setCsLocked(false)}
+                    className="shrink-0 px-3 py-2 rounded-lg border border-line hover:bg-paper text-sm text-ink"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -130,20 +162,46 @@ export default function Settings() {
                 checked={sameAsCs}
                 onChange={(e) => {
                   setSameAsCs(e.target.checked)
-                  if (e.target.checked) setCashier(cs)
+                  if (e.target.checked) {
+                    setCashier(cs)
+                    setCashierLocked(true)
+                  }
                 }}
               />
               Gunakan nomor yang sama dengan CS
             </label>
             <div>
-              <label className={label}>Kasir</label>
-              <input
-                className={field}
-                value={cashier}
-                disabled={sameAsCs}
-                onChange={(e) => setCashier(e.target.value)}
-                placeholder="62812xxxxxx"
-              />
+              <div className="flex items-center justify-between">
+                <label className={label}>Kasir</label>
+                {cashier !== '' && !cashierLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setCashierLocked(true)}
+                    className="text-xs text-rose hover:underline"
+                  >
+                    Sembunyikan
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  className={field}
+                  value={cashier}
+                  disabled={sameAsCs || cashierLocked}
+                  onChange={(e) => setCashier(e.target.value)}
+                  placeholder="62812xxxxxx"
+                  readOnly={!sameAsCs && cashierLocked}
+                />
+                {!sameAsCs && cashierLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setCashierLocked(false)}
+                    className="shrink-0 px-3 py-2 rounded-lg border border-line hover:bg-paper text-sm text-ink"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <button

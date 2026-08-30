@@ -8,10 +8,28 @@ export default function ProductCard({ product, onAdd, onOpen }) {
   const discounted = product.discount > 0
   const hasVariants = (product.colors?.length || product.sizes?.length) > 0
 
+  function defaultVariant() {
+    const stock = product.stock ?? {}
+    const colors = (product.colors ?? []).map((c) => c.name)
+    const sizes = product.sizes ?? []
+
+    if (colors.length && sizes.length) {
+      for (const color of colors) {
+        for (const size of sizes) {
+          const qty = Number(stock[`${color}|${size}`] ?? 0)
+          if (qty > 0) return { color, size }
+        }
+      }
+      return { color: colors[0], size: sizes[0] }
+    }
+    if (colors.length) return { color: colors[0], size: '' }
+    if (sizes.length) return { color: '', size: sizes[0] }
+    return { color: '', size: '' }
+  }
+
   function quickAdd(e) {
     e.stopPropagation()
-    if (hasVariants) onOpen(product)
-    else onAdd(product.id)
+    onAdd(product.id, 1, hasVariants ? defaultVariant() : undefined)
   }
 
   return (

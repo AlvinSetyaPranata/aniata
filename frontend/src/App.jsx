@@ -52,8 +52,8 @@ export default function App() {
       .finally(() => setLoading(false))
   }, [])
 
-  function handleAdd(id, qty = 1) {
-    cart.add(id, qty)
+  function handleAdd(id, qty = 1, variant) {
+    cart.add(id, qty, variant)
     toast(t('addedToCart'))
   }
 

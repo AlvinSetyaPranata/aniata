@@ -39,9 +39,16 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   const text = await res.text()
   const data = text ? JSON.parse(text) : null
   if (!res.ok) {
-    const message =
-      (data && (data.message || (data.errors && JSON.stringify(data.errors)))) ||
-      `Request failed (${res.status})`
+    let message
+    if (data && data.message) {
+      message = data.message
+    } else if (data && data.errors) {
+      // Validation errors: surface the first field's (Indonesian) message.
+      const first = Object.values(data.errors).flat()[0]
+      message = first || 'Terjadi kesalahan validasi.'
+    } else {
+      message = `Permintaan gagal (${res.status}).`
+    }
     throw new Error(message)
   }
   return data

@@ -20,7 +20,7 @@ class AdminController extends Controller
         ]);
 
         if (! Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['message' => 'Email atau kata sandi salah.'], 401);
         }
 
         $user = Auth::user();

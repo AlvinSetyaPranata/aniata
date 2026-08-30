@@ -20,7 +20,7 @@ export default function CartDrawer({
 
   useScrollLock(open || shipOpen)
 
-  const WA_NUMBER = String(
+  const DEFAULT_WA = String(
     import.meta.env.VITE_WHATSAPP_NUMBER ?? '6281234567890',
   ).replace(/\D/g, '')
   const STORE_NAME = import.meta.env.VITE_STORE_NAME ?? 'Aniata'
@@ -77,9 +77,27 @@ export default function CartDrawer({
     setShipOpen(true)
   }
 
-  function handleShipSubmit(shipping) {
+  async function resolveWaNumber() {
+    const digitsOnly = (v) => String(v ?? '').replace(/\D/g, '')
+    const fallback = DEFAULT_WA
+    try {
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+      const res = await fetch(`${API}/settings`, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!res.ok) return fallback
+      const settings = await res.json()
+      // Checkout targets the Kasir number; fall back to CS, then the env default.
+      return digitsOnly(settings.cashier_wa) || digitsOnly(settings.cs_wa) || fallback
+    } catch {
+      return fallback
+    }
+  }
+
+  async function handleShipSubmit(shipping) {
     recordOrder(shipping)
-    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
+    const number = await resolveWaNumber()
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(
       buildMessage(shipping),
     )}`
     window.open(url, '_blank', 'noopener')

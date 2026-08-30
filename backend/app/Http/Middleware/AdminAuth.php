@@ -11,7 +11,7 @@ class AdminAuth
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user('sanctum')) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return response()->json(['message' => 'Tidak terautentikasi. Silakan masuk kembali.'], 401);
         }
 
         return $next($request);
