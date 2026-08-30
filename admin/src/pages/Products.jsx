@@ -34,11 +34,9 @@ function toPayload(form) {
     })
   })
 
-  if (form.editing) {
-    Object.entries(form.stock).forEach(([key, val]) => {
-      if (val !== '') fd.append(`stock[${key}]`, String(val))
-    })
-  }
+  Object.entries(form.stock).forEach(([key, val]) => {
+    if (val !== '') fd.append(`stock[${key}]`, String(val))
+  })
 
   if (firstImageFile) fd.append('image', firstImageFile)
 
@@ -176,7 +174,6 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
 
   const field = 'w-full border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose'
   const label = 'block text-sm font-medium mb-1'
-  const showStock = form.editing && form.colors.some((c) => (c.sizes ?? []).length > 0)
 
   const fmtInput = (v) => {
     const raw = String(v ?? '').replace(/[^\d]/g, '')
@@ -386,35 +383,64 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
           </div>
         </div>
 
-        {/* Stock (edit only, per variant) */}
-        {showStock && (
+        {/* Stock: single total field when no variants, per-variant grid otherwise */}
+        {form.colors.length === 0 ? (
+          <div className="mt-6">
+            <label className="text-sm font-medium mb-1 block">Stok</label>
+            <input
+              type="number"
+              min="0"
+              className="w-32 border border-line rounded px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
+              value={form.stock['|'] ?? ''}
+              onChange={(e) => setStock('|', e.target.value)}
+              placeholder="0"
+            />
+            <p className="text-xs text-muted mt-1">Stok total untuk produk tanpa varian.</p>
+          </div>
+        ) : (
           <div className="mt-6">
             <label className="text-sm font-medium mb-2 block">Stok per Varian</label>
             <div className="flex flex-col gap-3">
               {form.colors
-                .filter((c) => (c.sizes ?? []).length > 0)
-                .map((c) => (
-                  <div key={c.name} className="border border-line rounded-lg p-3">
-                    <div className="text-sm font-medium mb-2">{c.name}</div>
-                    <div className="flex flex-wrap gap-3">
-                      {c.sizes.map((s) => {
-                        const key = `${c.name}|${s}`
-                        return (
-                          <label key={s} className="flex items-center gap-1 text-sm">
-                            <span>{s}</span>
-                            <input
-                              type="number"
-                              min="0"
-                              className="w-16 border border-line rounded px-2 py-1 bg-paper"
-                              value={form.stock[key] ?? ''}
-                              onChange={(e) => setStock(key, e.target.value)}
-                            />
-                          </label>
-                        )
-                      })}
+                .filter((c) => (c.name ?? '').trim() !== '')
+                .map((c) => {
+                  const sizes = c.sizes ?? []
+                  return (
+                    <div key={c.name} className="border border-line rounded-lg p-3">
+                      <div className="text-sm font-medium mb-2">{c.name}</div>
+                      {sizes.length > 0 ? (
+                        <div className="flex flex-wrap gap-3">
+                          {sizes.map((s) => {
+                            const key = `${c.name}|${s}`
+                            return (
+                              <label key={s} className="flex items-center gap-1 text-sm">
+                                <span>{s}</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  className="w-16 border border-line rounded px-2 py-1 bg-paper"
+                                  value={form.stock[key] ?? ''}
+                                  onChange={(e) => setStock(key, e.target.value)}
+                                />
+                              </label>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-1 text-sm">
+                          <span>Stok</span>
+                          <input
+                            type="number"
+                            min="0"
+                            className="w-16 border border-line rounded px-2 py-1 bg-paper"
+                            value={form.stock[`${c.name}|`] ?? ''}
+                            onChange={(e) => setStock(`${c.name}|`, e.target.value)}
+                          />
+                        </label>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
             </div>
           </div>
         )}

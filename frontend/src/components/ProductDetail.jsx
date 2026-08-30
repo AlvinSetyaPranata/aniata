@@ -21,6 +21,10 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
   const stockOf = (c, s) =>
     product.stock ? (product.stock[`${c}|${s}`] ?? 0) : null
 
+  const totalStockCount = product.stock
+    ? Object.values(product.stock).reduce((sum, n) => sum + (Number(n) || 0), 0)
+    : null
+
   const colorObj = colors.find((c) => c.name === color)
   const gallerySource = colorObj?.images?.length
     ? colorObj.images
@@ -55,7 +59,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
     }
   }
 
-  const stock = hasVariants ? stockOf(color, size) : null
+  const stock = hasVariants ? stockOf(color, size) : totalStockCount
   const soldOut = stock === 0
   const variant = hasVariants ? { color, size } : {}
 
@@ -136,6 +140,12 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
               </p>
             )}
 
+            {!hasVariants && totalStockCount != null && (
+              <p className="m-0 font-medium text-[11px] leading-none tracking-[0.12em] uppercase text-muted">
+                {t('totalStock', { n: totalStockCount })}
+              </p>
+            )}
+
             {hasVariants && (
               <div className="mt-[4px] flex flex-col gap-[20px]">
                 {colors.length > 0 && (
@@ -208,12 +218,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                 </p>
                 {product.stock && (
                   <p className="m-0 font-medium text-[11px] leading-none tracking-[0.12em] uppercase text-muted">
-                    {t('totalStock', {
-                      n: Object.values(product.stock).reduce(
-                        (sum, n) => sum + (Number(n) || 0),
-                        0,
-                      ),
-                    })}
+                    {t('totalStock', { n: totalStockCount })}
                   </p>
                 )}
 
@@ -284,10 +289,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                               </td>
                             ))}
                             <td className="px-[12px] py-[10px] text-right font-semibold text-ink">
-                              {Object.values(product.stock).reduce(
-                                (sum, n) => sum + (Number(n) || 0),
-                                0,
-                              )}
+                              {totalStockCount}
                             </td>
                           </tr>
                         </tfoot>
