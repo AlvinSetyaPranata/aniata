@@ -4,18 +4,34 @@ import { useToast } from '../components/Toast.jsx'
 
 const fmt = (n) => 'Rp ' + Number(n ?? 0).toLocaleString('id-ID')
 
+const MONTHS = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+]
+const CURRENT_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: CURRENT_YEAR - 2023 }, (_, i) => CURRENT_YEAR - i)
+
 export default function Dashboard() {
   const { toast } = useToast()
   const [stats, setStats] = useState(null)
+  const [year, setYear] = useState('')
+  const [month, setMonth] = useState('')
 
   useEffect(() => {
     api
-      .stats()
+      .stats({ year, month })
       .then(setStats)
       .catch((e) => toast(e.message))
-  }, [])
+  }, [year, month])
 
   if (!stats) return <p className="text-muted">Memuat…</p>
+
+  const periodLabel =
+    month && year
+      ? `${MONTHS[Number(month) - 1]} ${year}`
+      : year
+        ? `${year}`
+        : 'Semua periode'
 
   const cards = [
     { label: 'Total Produk', value: stats.total_products },
@@ -40,8 +56,36 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-8 bg-surface border border-line rounded-xl p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-serif text-xl">Produk Paling Sering Checkout</h2>
+            <span className="text-muted text-sm">Periode: {periodLabel}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose text-sm"
+            >
+              <option value="">Semua bulan</option>
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i + 1}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose text-sm"
+            >
+              <option value="">Semua tahun</option>
+              {YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div className="flex items-baseline justify-between mb-4">
-          <h2 className="font-serif text-xl">Produk Paling Sering Checkout</h2>
           <span className="text-muted text-sm">
             {stats.total_units_checked_out?.toLocaleString('id-ID') ?? 0} unit total
           </span>

@@ -39,7 +39,7 @@ class AdminController extends Controller
         return response()->json(['message' => 'Logged out']);
     }
 
-    public function stats()
+    public function stats(Request $request)
     {
         $products = Product::all();
 
@@ -65,6 +65,14 @@ class AdminController extends Controller
 
         $unitsByProduct = OrderItem::query()
             ->selectRaw('product_id, SUM(qty) as units')
+            ->when(
+                $request->filled('year'),
+                fn ($q) => $q->whereYear('created_at', $request->integer('year')),
+            )
+            ->when(
+                $request->filled('month'),
+                fn ($q) => $q->whereMonth('created_at', $request->integer('month')),
+            )
             ->groupBy('product_id')
             ->pluck('units', 'product_id');
 

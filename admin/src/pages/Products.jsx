@@ -425,9 +425,12 @@ export default function Products() {
 
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
-  const [sort, setSort] = useState('newest')
+  const [sortKey, setSortKey] = useState('newest')
+  const [sortDir, setSortDir] = useState('desc')
+  const [page, setPage] = useState(1)
+  const PER_PAGE = 10
 
-  const visible = useMemo(() => {
+  const sorted = useMemo(() => {
     if (!Array.isArray(items)) return []
     const q = query.trim().toLowerCase()
     let list = items.filter((p) => {
@@ -437,32 +440,50 @@ export default function Products() {
       return true
     })
 
-    const dir = (key, numeric = true) =>
-      [...list].sort((a, b) => {
-        if (numeric) {
-          return Number(a[key] ?? 0) - Number(b[key] ?? 0)
-        }
-        return String(a[key] ?? '')
-          .toLowerCase()
-          .localeCompare(String(b[key] ?? '').toLowerCase(), 'id')
-      })
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...list].sort((a, b) => {
+      if (sortKey === 'name') {
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''), 'id') * dir
+      }
+      const keyVal = sortKey === 'newest' ? 'id' : sortKey
+      return (Number(a[keyVal] ?? 0) - Number(b[keyVal] ?? 0)) * dir
+    })
+  }, [items, query, filter, sortKey, sortDir])
 
-    switch (sort) {
-      case 'name-asc':
-        return dir('name', false)
-      case 'name-desc':
-        return dir('name', false).reverse()
-      case 'price-asc':
-        return dir('price')
-      case 'price-desc':
-        return dir('price').reverse()
-      case 'discount-desc':
-        return dir('discount').reverse()
-      case 'newest':
-      default:
-        return [...list].sort((a, b) => b.id - a.id)
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PER_PAGE))
+  const safePage = Math.min(page, pageCount)
+  const visible = useMemo(
+    () => sorted.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE),
+    [sorted, safePage],
+  )
+
+  function setSort(key) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir(key === 'name' ? 'asc' : 'desc')
     }
-  }, [items, query, filter, sort])
+    setPage(1)
+  }
+
+  const goPage = (n) => setPage(Math.max(1, Math.min(pageCount, n)))
+
+  const SortTh = ({ active, dir, onClick, children, align = 'text-left' }) => (
+    <th className={`font-medium px-4 py-3 ${align}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center gap-1 hover:text-ink transition-colors"
+      >
+        {children}
+        <span className="inline-flex flex-col leading-none text-[9px]">
+          <span className={active && dir === 'asc' ? 'text-rose' : 'text-muted/50'}>▲</span>
+          <span className={active && dir === 'desc' ? 'text-rose' : 'text-muted/50'}>▼</span>
+        </span>
+      </button>
+    </th>
+  )
 
   function load() {
     api
@@ -536,31 +557,28 @@ export default function Products() {
             <input
               type="search"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setPage(1)
+              }}
               placeholder="Cari nama produk…"
               className="w-full md:flex-1 border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
             />
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => {
+                setFilter(e.target.value)
+                setPage(1)
+              }}
               className="border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
             >
               <option value="all">Semua produk</option>
               <option value="sale">Sedang diskon</option>
               <option value="no-sale">Tanpa diskon</option>
             </select>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="border border-line rounded-lg px-3 py-2 bg-paper focus:outline-none focus:ring-2 focus:ring-rose"
-            >
-              <option value="newest">Terbaru</option>
-              <option value="name-asc">Nama A→Z</option>
-              <option value="name-desc">Nama Z→A</option>
-              <option value="price-asc">Harga terendah</option>
-              <option value="price-desc">Harga tertinggi</option>
-              <option value="discount-desc">Diskon terbesar</option>
-            </select>
+            <span className="text-sm text-muted whitespace-nowrap">
+              Klik judul kolom untuk mengurutkan
+            </span>
           </div>
 
           {visible.length === 0 ? (
@@ -570,14 +588,33 @@ export default function Products() {
               </p>
             </div>
           ) : (
+            <>
             <div className="border border-line rounded-xl overflow-hidden bg-surface overflow-x-auto">
               <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-[#f1ede4] text-muted">
                   <tr>
                     <th className="text-left font-medium px-4 py-3">Gambar</th>
-                    <th className="text-left font-medium px-4 py-3">Nama</th>
-                    <th className="text-left font-medium px-4 py-3">Harga</th>
-                    <th className="text-left font-medium px-4 py-3">Diskon</th>
+                    <SortTh
+                      active={sortKey === 'name'}
+                      dir={sortDir}
+                      onClick={() => setSort('name')}
+                    >
+                      Nama
+                    </SortTh>
+                    <SortTh
+                      active={sortKey === 'price'}
+                      dir={sortDir}
+                      onClick={() => setSort('price')}
+                    >
+                      Harga
+                    </SortTh>
+                    <SortTh
+                      active={sortKey === 'discount'}
+                      dir={sortDir}
+                      onClick={() => setSort('discount')}
+                    >
+                      Diskon
+                    </SortTh>
                     <th className="text-right font-medium px-4 py-3">Aksi</th>
                   </tr>
                 </thead>
@@ -642,6 +679,65 @@ export default function Products() {
             </tbody>
           </table>
         </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-muted">
+            Menampilkan {sorted.length === 0 ? 0 : (safePage - 1) * PER_PAGE + 1}–
+            {Math.min(safePage * PER_PAGE, sorted.length)} dari {sorted.length} produk
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => goPage(safePage - 1)}
+              disabled={safePage <= 1}
+              className="px-3 py-1.5 rounded-lg border border-line text-sm hover:bg-paper disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              ‹
+            </button>
+            {Array.from({ length: pageCount }, (_, i) => i + 1)
+              .filter(
+                (n) =>
+                  n === 1 ||
+                  n === pageCount ||
+                  Math.abs(n - safePage) <= 1,
+              )
+              .reduce(
+                (acc, n, idx, arr) => {
+                  if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…')
+                  acc.push(n)
+                  return acc
+                },
+                [],
+              )
+              .map((n, i) =>
+                n === '…' ? (
+                  <span key={`e${i}`} className="px-2 text-muted text-sm">…</span>
+                ) : (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => goPage(n)}
+                    className={`px-3 py-1.5 rounded-lg text-sm border border-transparent ${
+                      n === safePage
+                        ? 'bg-ink text-paper'
+                        : 'hover:bg-paper border-line'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ),
+              )}
+            <button
+              type="button"
+              onClick={() => goPage(safePage + 1)}
+              disabled={safePage >= pageCount}
+              className="px-3 py-1.5 rounded-lg border border-line text-sm hover:bg-paper disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+            </>
           )
           }
         </>

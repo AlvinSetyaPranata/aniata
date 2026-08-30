@@ -65,7 +65,12 @@ export const api = {
     }),
   getSettings: () => request('/admin/settings'),
   updateSettings: (payload) => request('/admin/settings', { method: 'PUT', body: payload }),
-  stats: () => request('/admin/stats'),
+  stats: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== '' && v != null),
+    ).toString()
+    return request(`/admin/stats${qs ? `?${qs}` : ''}`)
+  },
   listProducts: () => request('/admin/products'),
   createProduct: (payload) => request('/admin/products', { method: 'POST', body: payload }),
   updateProduct: (id, payload) =>
