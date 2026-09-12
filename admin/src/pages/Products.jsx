@@ -672,7 +672,7 @@ export default function Products() {
                   <td className="px-4 py-3">
                     {p.image ? (
                       <img
-                        src={`${BASE_API}/${p.image}`}
+                        src={`${BASE_API}${p.image}`}
                         alt=""
                         className="h-12 w-10 rounded border border-line object-cover"
                       />
