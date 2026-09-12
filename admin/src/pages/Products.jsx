@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast.jsx'
 
 
 const QUICK_SIZES = ['S', 'M', 'L', 'XL', 'XXL']
+const BASE_API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 function toPayload(form) {
   const fd = new FormData()
@@ -298,7 +299,7 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
                       {c.gallery.slice(0, 4).map((g, gi) => (
                         <span key={gi} className="relative">
                           <img
-                            src={g.url}
+                            src={`${BASE_API}/${g.url}`}
                             alt=""
                             className="h-full w-full object-cover"
                           />
