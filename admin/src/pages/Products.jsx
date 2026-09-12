@@ -299,7 +299,7 @@ export function ProductForm({ initial, onSubmit, onCancel, busy, error }) {
                       {c.gallery.slice(0, 4).map((g, gi) => (
                         <span key={gi} className="relative">
                           <img
-                            src={`${BASE_API}/${g.url}`}
+                            src={g.url}
                             alt=""
                             className="h-full w-full object-cover"
                           />
@@ -672,7 +672,7 @@ export default function Products() {
                   <td className="px-4 py-3">
                     {p.image ? (
                       <img
-                        src={p.image}
+                        src={`${BASE_API}/${p.image}`}
                         alt=""
                         className="h-12 w-10 rounded border border-line object-cover"
                       />
