@@ -3,9 +3,10 @@ import { api } from '../api'
 import { useToast } from '../components/Toast.jsx'
 
 
-
 const QUICK_SIZES = ['S', 'M', 'L', 'XL', 'XXL']
-const BASE_API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const BASE_ASSET_API = import.meta.env.VITE_BASE_ASSET_API || 'http://localhost:8000'
+
+console.log(BASE_ASSET_API)
 
 function toPayload(form) {
   const fd = new FormData()
@@ -672,7 +673,7 @@ export default function Products() {
                   <td className="px-4 py-3">
                     {p.image ? (
                       <img
-                        src={`${BASE_API}${p.image}`}
+                        src={`${BASE_ASSET_API}${p.image}`}
                         alt=""
                         className="h-12 w-10 rounded border border-line object-cover"
                       />
