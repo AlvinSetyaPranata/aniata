@@ -18,7 +18,7 @@ export default function SkeletonImage({
         <div className="skeleton-shimmer absolute inset-0" aria-hidden="true" />
       )}
       <img
-        src={`${import.meta.env.VITE_API_URL}${src}`}
+        src={`${import.meta.env.VITE_BASE_ASSET_API}${src}`}
         alt={alt}
         className={`block h-full w-full object-cover transition-opacity duration-500 ${
           loaded ? 'opacity-100' : 'opacity-0'

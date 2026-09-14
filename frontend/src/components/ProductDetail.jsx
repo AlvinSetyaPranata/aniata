@@ -105,7 +105,7 @@ export default function ProductDetail({ product, products, onBack, onOpen, onAdd
                     onClick={() => setActive(i)}
                     aria-label={`${product.name} ${i + 1}`}
                   >
-                     <SkeletonImage className="block h-full w-full" src={`${import.meta.env.VITE_API_URL}${src}`} alt="" loading="lazy" />
+                     <SkeletonImage className="block h-full w-full" src={`${import.meta.env.VITE_BASE_ASSET_API}${src}`} alt="" loading="lazy" />
                   </button>
                 ))}
               </div>
